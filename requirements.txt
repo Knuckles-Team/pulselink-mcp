@@ -1,0 +1,2 @@
+agent-utilities>=0.47.0
+python-dotenv>=1.0.0

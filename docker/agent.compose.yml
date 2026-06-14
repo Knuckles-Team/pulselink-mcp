@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  pulselink-mcp-mcp:
+    image: knucklessg1/pulselink-mcp:latest
+    container_name: pulselink-mcp-mcp
+    hostname: pulselink-mcp-mcp
+    restart: always
+    env_file:
+      - ../.env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HOST=0.0.0.0
+      - PORT=8000
+      - TRANSPORT=streamable-http
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  pulselink-mcp-agent:
+    image: knucklessg1/pulselink-mcp:latest
+    container_name: pulselink-mcp-agent
+    hostname: pulselink-mcp-agent
+    restart: always
+    depends_on:
+      - pulselink-mcp-mcp
+    env_file:
+      - ../.env
+    command: [ "pulselink-agent" ]
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HOST=0.0.0.0
+      - PORT=9000
+      - MCP_URL=http://pulselink-mcp-mcp:8000/mcp
+      - PROVIDER=${PROVIDER:-openai}
+      - MODEL_ID=${MODEL_ID:-gpt-4o}
+      - ENABLE_WEB_UI=True
+      - ENABLE_OTEL=True
+    ports:
+      - "9000:9000"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "pulselink-mcp": {
+      "command": "uv",
+      "args": [
+        "run",
+        "pulselink-mcp"
+      ],
+      "env": {
+        "PULSELINK_MCP_URL": "<YOUR_PULSELINK_MCP_URL>",
+        "PULSELINK_MCP_TOKEN": "<YOUR_PULSELINK_MCP_TOKEN>",
+        "PULSELINK_MCP_SSL_VERIFY": "<YOUR_PULSELINK_MCP_SSL_VERIFY>",
+        "SYSTEMTOOL": "True"
+      }
+    }
+  }
+}

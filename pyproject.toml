@@ -1,0 +1,59 @@
+[build-system]
+requires = [ "setuptools>=80.9.0", "wheel",]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pulselink-mcp"
+version = "0.1.0"
+description = "PulseLink — keyless open-web & social research source (MCP Server + A2A Server)"
+readme = "README.md"
+classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
+requires-python = ">=3.11, <3.15"
+dependencies = [ "agent-utilities>=0.47.0", "python-dotenv>=1.0.0",]
+[[project.authors]]
+name = "Audel Rouhi"
+email = "knucklessg1@gmail.com"
+
+[project.license]
+text = "MIT"
+
+[project.optional-dependencies]
+mcp = [ "agent-utilities[mcp]>=0.47.0",]
+agent = [ "agent-utilities[agent,logfire]>=0.47.0",]
+all = [ "pulselink-mcp[mcp,agent,logfire]>=0.1.0",]
+test = [
+    "pytest-xdist>=3.6.0", "pytest", "pytest-asyncio", "pytest-cov",]
+
+[project.scripts]
+pulselink-mcp = "pulselink_mcp.mcp_server:mcp_server"
+pulselink-agent = "pulselink_mcp.agent_server:agent_server"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+check_untyped_defs = true
+
+[dependency-groups]
+dev = [
+    "pytest-timeout>=2.4.0",
+]
+
+[tool.setuptools.package-data]
+pulselink_mcp = [ "mcp_config.json", "agent_data/**",]
+
+[tool.ruff.lint]
+select = [ "E", "F", "I", "UP", "B",]
+ignore = [ "E402", "E501", "B008",]
+
+[tool.setuptools.packages.find]
+where = [ ".",]
+
+[tool.vulture]
+ignore_names = ["request", "config"]
