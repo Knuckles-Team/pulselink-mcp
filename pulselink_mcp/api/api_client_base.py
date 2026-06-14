@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 import requests
 
@@ -13,7 +13,7 @@ class ApiClientBase:
         self.session = requests.Session()
         self.session.headers.update({"Authorization": f"Bearer {token}"})
 
-    def request(self, method: str, path: str, **kwargs) -> Dict[str, Any]:
+    def request(self, method: str, path: str, **kwargs) -> dict[str, Any]:
         url = f"{self.base_url}/{path.lstrip('/')}"
         response = self.session.request(method, url, verify=self.verify, **kwargs)
         response.raise_for_status()

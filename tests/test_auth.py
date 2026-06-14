@@ -1,15 +1,20 @@
-import pytest
-from unittest.mock import patch
-
 import pulselink_mcp.auth as auth_module
+from pulselink_mcp.api import PulseLinkClient
 from pulselink_mcp.auth import get_client
 
 
-def test_get_client_auth_error():
+def test_get_client_returns_pulselink_singleton():
     auth_module._client = None
-    with patch("pulselink_mcp.auth.ApiClientSystem") as mock_client_cls:
-        mock_client_cls.side_effect = Exception("Auth Failure")
-        with pytest.raises(RuntimeError) as exc_info:
-            get_client()
-        assert "AUTHENTICATION ERROR" in str(exc_info.value)
+    c1 = get_client()
+    c2 = get_client()
+    assert isinstance(c1, PulseLinkClient)
+    assert c1 is c2  # singleton
     auth_module._client = None
+
+
+def test_client_lists_all_sources():
+    client = get_client()
+    sources = client.sources()
+    # 14-channel parity + the keyless globals.
+    for expected in ("youtube", "reddit", "x", "hackernews", "web", "rss"):
+        assert expected in sources

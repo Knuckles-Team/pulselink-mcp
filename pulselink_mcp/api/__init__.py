@@ -1,4 +1,4 @@
 from .api_client_base import ApiClientBase
-from .api_client_system import ApiClientSystem
+from .api_client_pulse import PulseLinkClient
 
-__all__ = ["ApiClientBase", "ApiClientSystem"]
+__all__ = ["ApiClientBase", "PulseLinkClient"]

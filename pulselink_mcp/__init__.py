@@ -1,14 +1,12 @@
 #!/usr/bin/env python
-# coding: utf-8
 
 import importlib
 import inspect
 import warnings
-from typing import List
 
 warnings.filterwarnings("ignore", message=".*urllib3.*or chardet.*")
 
-__all__: List[str] = []
+__all__: list[str] = []
 
 CORE_MODULES = [
     "pulselink_mcp.api",

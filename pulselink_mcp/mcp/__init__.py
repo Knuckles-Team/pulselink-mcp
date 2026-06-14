@@ -1,3 +1,3 @@
-from .mcp_system import register_system_tools
+from .mcp_pulse import register_pulse_tools
 
-__all__ = ["register_system_tools"]
+__all__ = ["register_pulse_tools"]
