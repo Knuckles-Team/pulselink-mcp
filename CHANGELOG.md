@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Hosted X (Twitter) search/browse tools (`integrations/x_search_tool.py`), externalized from agent-utilities, exposing keyless X reach over the source ladder.
+
 ## [0.1.0] - 2026-06-14
 
 ### Added
