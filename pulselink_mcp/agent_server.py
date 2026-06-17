@@ -50,7 +50,11 @@ def agent_server():
         base_url=args.base_url,
         api_key=args.api_key,
         agent_description=os.getenv(
-            "AGENT_DESCRIPTION", meta.get("description", "PulseLink — keyless open-web & social research source (MCP Server + A2A Server)")
+            "AGENT_DESCRIPTION",
+            meta.get(
+                "description",
+                "PulseLink — keyless open-web & social research source (MCP Server + A2A Server)",
+            ),
         ),
         system_prompt=os.getenv(
             "AGENT_SYSTEM_PROMPT",

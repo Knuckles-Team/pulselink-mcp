@@ -88,7 +88,7 @@ def _extract_subtitle_text(info: dict) -> str:
     """Download and flatten the best available English caption track to text."""
     import requests
 
-    tracks = {}
+    tracks: dict[str, list[dict[str, str]]] = {}
     tracks.update(info.get("subtitles") or {})
     tracks.update(info.get("automatic_captions") or {})
     for lang in ("en", "en-US", "en-orig"):
@@ -100,7 +100,7 @@ def _extract_subtitle_text(info: dict) -> str:
         )
         try:
             raw = requests.get(chosen["url"], timeout=30).text
-        except Exception:  # noqa: BLE001
+        except Exception:  # nosec B112  # noqa: BLE001 - best-effort: skip a caption track that fails to download and try the next language
             continue
         return _strip_caption_markup(raw, chosen.get("ext", ""))
     return ""

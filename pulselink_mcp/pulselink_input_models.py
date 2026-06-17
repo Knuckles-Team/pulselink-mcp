@@ -1,7 +1,6 @@
 #!/usr/bin/python
 """Pydantic input models for PulseLink MCP API request parameters."""
 
-
 from pydantic import BaseModel, Field
 
 
