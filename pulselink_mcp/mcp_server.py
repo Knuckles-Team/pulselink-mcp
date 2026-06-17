@@ -11,7 +11,7 @@ from dotenv import find_dotenv, load_dotenv
 
 from .mcp import register_pulse_tools
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 logger = get_logger(name="MCP_Server")
 logger.setLevel(logging.INFO)
