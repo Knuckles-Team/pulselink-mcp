@@ -1,14 +1,20 @@
 #!/usr/bin/python
 
 import logging
-import os
 import sys
 from typing import Any
 
-from agent_utilities.base_utilities import get_logger, to_boolean
-from agent_utilities.mcp_utilities import create_mcp_server, load_config
+from agent_utilities.base_utilities import get_logger
+from agent_utilities.mcp_utilities import (
+    create_mcp_server,
+    load_config,
+    register_tool_surface,
+)
 
-from .mcp import register_pulse_tools
+from pulselink_mcp.api import PulseLinkClient
+from pulselink_mcp.auth import get_client
+
+from .mcp import register_pulse_tools  # noqa: F401  (auto-discovered as tag "pulse")
 
 __version__ = "0.3.0"
 
@@ -30,9 +36,13 @@ def get_mcp_instance() -> tuple[Any, Any, Any]:
         ),
     )
 
-    DEFAULT_PULSETOOL = to_boolean(os.getenv("PULSETOOL", "True"))
-    if DEFAULT_PULSETOOL:
-        register_pulse_tools(mcp)
+    register_tool_surface(
+        mcp,
+        client_cls=PulseLinkClient,
+        get_client=get_client,
+        service="pulselink-mcp",
+        tools_module=sys.modules[__name__],
+    )
 
     for mw in middlewares:
         mcp.add_middleware(mw)
