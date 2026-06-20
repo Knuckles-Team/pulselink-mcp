@@ -6,8 +6,7 @@ import sys
 from typing import Any
 
 from agent_utilities.base_utilities import get_logger, to_boolean
-from agent_utilities.mcp_utilities import create_mcp_server
-from dotenv import find_dotenv, load_dotenv
+from agent_utilities.mcp_utilities import create_mcp_server, load_config
 
 from .mcp import register_pulse_tools
 
@@ -19,7 +18,7 @@ logger.setLevel(logging.INFO)
 
 def get_mcp_instance() -> tuple[Any, Any, Any]:
     """Initialize and return the PulseLink MCP MCP instance, args, and middlewares."""
-    load_dotenv(find_dotenv())
+    load_config()
 
     args, mcp, middlewares = create_mcp_server(
         name="PulseLink MCP",
