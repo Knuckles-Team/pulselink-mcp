@@ -89,6 +89,23 @@ copy-paste `mcp_config.json` for all four transports — **stdio**, **streamable
   `http://pulselink-mcp.arpa/mcp` using the `"url"` key.
 <!-- END GENERATED: additional-deployment-options -->
 
+## Available MCP Tools
+
+This table is auto-generated from the live server — do not edit by hand.
+
+<!-- MCP-TOOLS-TABLE:START -->
+
+| MCP Tool | Toggle Env Var | Description |
+|----------|----------------|-------------|
+| `pulse_fetch` | `PULSETOOL` | Fetch one item (full text/body/transcript). CONCEPT:PULSE-001 |
+| `pulse_list` | `PULSETOOL` | List items from a source channel/feed. CONCEPT:PULSE-001 |
+| `pulse_search` | `PULSETOOL` | Search a source and return normalized documents. CONCEPT:PULSE-001 |
+| `pulse_status` | `PULSETOOL` | Per-source backend + credential health (the doctor). CONCEPT:PULSE-001 |
+| `pulse_transcribe` | `PULSETOOL` | Transcribe video/audio to text. CONCEPT:PULSE-005 |
+
+_5 action-routed tools (default `MCP_TOOL_MODE=condensed`). Each is enabled unless its toggle is set false; set `MCP_TOOL_MODE=verbose` (or `both`) for the 1:1 per-operation surface. Auto-generated — do not edit._
+<!-- MCP-TOOLS-TABLE:END -->
+
 ## Install Python Package
 
 ```bash
