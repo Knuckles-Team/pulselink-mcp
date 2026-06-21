@@ -1,4 +1,4 @@
 include LICENSE
 include README.md
 include requirements.txt
-recursive-include pulselink_mcp *.py *.json
+recursive-include pulselink_mcp *.py *.json *.md *.yaml *.yml
