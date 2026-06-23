@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   pulselink-mcp-mcp:
-    image: knucklessg1/pulselink-mcp:latest
+    image: knucklessg1/pulselink-mcp:mcp
     container_name: pulselink-mcp-mcp
     hostname: pulselink-mcp-mcp
     restart: always
