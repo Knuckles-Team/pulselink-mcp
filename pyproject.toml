@@ -59,7 +59,7 @@ dev = [
 ]
 
 [tool.setuptools.package-data]
-pulselink_mcp = [ "mcp_config.json", "agent_data/**", "prompts/**", "skills/**",]
+pulselink_mcp = [ "mcp_config.json", "prompts/**", "skills/**",]
 
 [tool.ruff.lint]
 select = [ "E", "F", "I", "UP", "B",]
