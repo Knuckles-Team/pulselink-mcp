@@ -32,6 +32,14 @@ This repository is actively maintained - Contributions are welcome!
 The MCP Server can be run in `stdio` (local), `streamable-http` (networked), or
 `sse` mode.
 
+> **Install the slim `[mcp]` extra.** All examples below install
+> `pulselink-mcp[mcp]` — the MCP-server extra that pulls only the FastMCP /
+> FastAPI tooling (`agent-utilities[mcp]`). It deliberately **excludes** the heavy
+> agent runtime (the epistemic-graph engine, `pydantic-ai`, `dspy`, `llama-index`,
+> `tree-sitter`), so `uvx`/container installs are dramatically smaller and faster.
+> Use the full `[agent]` extra only when you need the integrated Pydantic AI agent
+> (see [Installation](#installation)).
+
 #### Environment Variables
 
 *   `PULSELINK_MCP_URL`: The URL of the target service.
@@ -44,7 +52,7 @@ The MCP Server can be run in `stdio` (local), `streamable-http` (networked), or
   "mcpServers": {
     "pulselink-mcp": {
       "command": "uvx",
-      "args": ["--from", "pulselink-mcp", "pulselink-mcp"],
+      "args": ["--from", "pulselink-mcp[mcp]", "pulselink-mcp"],
       "env": {
         "PULSELINK_MCP_URL": "https://service.example.com",
         "PULSELINK_MCP_TOKEN": "your_token"
@@ -61,7 +69,7 @@ The MCP Server can be run in `stdio` (local), `streamable-http` (networked), or
   "mcpServers": {
     "pulselink-mcp": {
       "command": "uvx",
-      "args": ["--from", "pulselink-mcp", "pulselink-mcp", "--transport", "streamable-http", "--port", "8000"],
+      "args": ["--from", "pulselink-mcp[mcp]", "pulselink-mcp", "--transport", "streamable-http", "--port", "8000"],
       "env": {
         "TRANSPORT": "streamable-http",
         "HOST": "0.0.0.0",
@@ -106,11 +114,113 @@ This table is auto-generated from the live server — do not edit by hand.
 _5 action-routed tools (default `MCP_TOOL_MODE=condensed`). Each is enabled unless its toggle is set false; set `MCP_TOOL_MODE=verbose` (or `both`) for the 1:1 per-operation surface. Auto-generated — do not edit._
 <!-- MCP-TOOLS-TABLE:END -->
 
-## Install Python Package
+## Environment Variables
+
+Every variable the server reads.
+
+### MCP server / transport
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `TRANSPORT` | `stdio`, `streamable-http`, or `sse` | `stdio` |
+| `HOST` | Bind host (HTTP transports) | `0.0.0.0` |
+| `PORT` | Bind port (HTTP transports) | `8000` |
+| `MCP_TOOL_MODE` | Tool surface: `condensed`, `verbose`, or `both` | `condensed` |
+| `MCP_ENABLED_TOOLS` / `MCP_DISABLED_TOOLS` | Comma-separated tool allow/deny list | — |
+| `MCP_ENABLED_TAGS` / `MCP_DISABLED_TAGS` | Comma-separated tag allow/deny list | — |
+| `DEBUG` | Verbose logging | `False` |
+| `PYTHONUNBUFFERED` | Unbuffered stdout (recommended in containers) | `1` |
+
+### Connection & credentials
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PULSELINK_MCP_URL` | Base URL of the target service | `http://localhost:8080` |
+| `PULSELINK_MCP_TOKEN` | API token / access token | — |
+
+### Source credentials (keyless-first)
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `SOURCE_CREDENTIALS` | JSON object mapping a source → credential descriptor (secret values are URI refs resolved via the secrets backend: `vault://`, `env://`, `sqlite://`). Keyless sources (youtube, web, rss, news, hackernews, v2ex, bilibili) need nothing here; auth-laddered sources (x, reddit, github, exa…) light up higher-fidelity backends when set. | — |
+
+### Tool toggles
+Each action-routed tool can be disabled individually via its toggle env var (set to `false`).
+The full list is in the [Available MCP Tools](#available-mcp-tools) table above.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PULSETOOL` | Enable the PulseLink source tools (`pulse_search` / `pulse_list` / `pulse_fetch` / `pulse_transcribe` / `pulse_status`) | `True` |
+
+### Telemetry & governance
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `ENABLE_OTEL` | Enable OpenTelemetry export | `True` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector endpoint | — |
+| `OTEL_EXPORTER_OTLP_PUBLIC_KEY` / `OTEL_EXPORTER_OTLP_SECRET_KEY` | OTLP auth keys | — |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | OTLP protocol (e.g. `http/protobuf`) | — |
+| `EUNOMIA_TYPE` | Authorization mode: `none`, `embedded`, `remote` | `none` |
+| `EUNOMIA_POLICY_FILE` | Embedded policy file | `mcp_policies.json` |
+| `EUNOMIA_REMOTE_URL` | Remote Eunomia server URL | — |
+
+### Agent CLI (full `[agent]` runtime only)
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MCP_URL` | URL of the MCP server the agent connects to | `http://localhost:8000/mcp` |
+| `PROVIDER` | LLM provider (e.g. `openai`) | `openai` |
+| `MODEL_ID` | Model id (e.g. `gpt-4o`) | `gpt-4o` |
+| `ENABLE_WEB_UI` | Serve the AG-UI web interface | `True` |
+
+See [`.env.example`](.env.example) for a copy-paste starting point.
+
+## Installation
+
+Pick the extra that matches what you want to run:
+
+| Extra | Installs | Use when |
+|-------|----------|----------|
+| `pulselink-mcp[mcp]` | Slim MCP server only (`agent-utilities[mcp]` — FastMCP/FastAPI) | You only run the **MCP server** (smallest install / image) |
+| `pulselink-mcp[agent]` | Full agent runtime (`agent-utilities[agent,logfire]` — Pydantic AI + the epistemic-graph engine) | You run the **integrated agent** |
+| `pulselink-mcp[all]` | Everything (`mcp` + `agent` + `logfire` + the `youtube`/`feeds`/`audio` source extras) | Development / both surfaces |
 
 ```bash
-python -m pip install pulselink-mcp
+# MCP server only (recommended for tool hosting — slim deps)
+uv pip install "pulselink-mcp[mcp]"
+
+# Full agent runtime (Pydantic AI + epistemic-graph engine)
+uv pip install "pulselink-mcp[agent]"
+
+# Everything (development)
+uv pip install "pulselink-mcp[all]"      # or: python -m pip install "pulselink-mcp[all]"
 ```
+
+> The optional source extras (`youtube` → `yt-dlp`, `feeds` → `feedparser`,
+> `audio` → `faster-whisper`) are lazy-imported; the keyless web/forum/news/dev
+> sources need none of them. Install `pulselink-mcp[sources]` for `youtube` + `feeds`.
+
+### Container images (`:mcp` vs `:agent`)
+
+One multi-stage `docker/Dockerfile` builds two right-sized images, selected by `--target`:
+
+| Image tag | Build target | Contents | Entrypoint |
+|-----------|--------------|----------|------------|
+| `knucklessg1/pulselink-mcp:mcp` | `--target mcp` | `pulselink-mcp[mcp]` — **slim**, no engine/`pydantic-ai`/`dspy`/`llama-index`/`tree-sitter` | `pulselink-mcp` |
+| `knucklessg1/pulselink-mcp:latest` | `--target agent` (default) | `pulselink-mcp[agent]` — **full** agent runtime + epistemic-graph engine | `pulselink-agent` |
+
+```bash
+docker build --target mcp   -t knucklessg1/pulselink-mcp:mcp    docker/   # slim MCP server
+docker build --target agent -t knucklessg1/pulselink-mcp:latest docker/   # full agent
+```
+
+`docker/mcp.compose.yml` runs the slim `:mcp` server; `docker/agent.compose.yml` runs the
+agent (`:latest`) with a co-located `:mcp` sidecar.
+
+### Knowledge-graph database (`epistemic-graph`)
+
+The **full agent** (`[agent]` / `:latest`) embeds the **epistemic-graph** engine (pulled in
+transitively via `agent-utilities[agent]`). For production — or to share one knowledge graph
+across multiple agents — run **epistemic-graph as its own database container** and point the
+agent at it instead of embedding it. Deployment recipes (single-node + Raft HA), connection
+config, and the full database architecture (with diagrams) are documented in the
+[epistemic-graph deployment guide](https://knuckles-team.github.io/epistemic-graph/deployment/).
+The slim `[mcp]` server does **not** require the database.
 
 
 <!-- BEGIN agent-os-genesis-deploy (generated; do not edit between markers) -->
