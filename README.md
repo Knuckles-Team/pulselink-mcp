@@ -59,8 +59,10 @@ The MCP Server can be run in `stdio` (local), `streamable-http` (networked), or
 | `EUNOMIA_TYPE` | `none` | options: none, embedded, remote |
 | `EUNOMIA_POLICY_FILE` | `mcp_policies.json` |  |
 | `EUNOMIA_REMOTE_URL` | `http://eunomia-server:8000` |  |
-| `PULSELINK_MCP_URL` | `http://localhost:8080` |  |
-| `PULSELINK_MCP_TOKEN` | `your_token_here` |  |
+| `XAI_BASE_URL` | `https://api.x.ai/v1` | xAI API base URL |
+| `XAI_SEARCH_MODEL` | `grok-4.3` | model used for X live search |
+| `XAI_SEARCH_TIMEOUT_SECONDS` | `180` | per-request timeout (seconds) |
+| `XAI_SEARCH_RETRIES` | `2` | retry attempts on failure |
 | `PULSETOOL` | `True` | MCP tools table (condensed action-routed surface). |
 | `SOURCE_CREDENTIALS` | `{"x":{"type":"cookie_session","secret":"vault://pulselink/x/session"},"reddit":{"type":"oauth2","secret":"vault://pulselink/reddit/token","token_url":"https://www.reddit.com/api/v1/access_token","client_id":"<id>","client_secret_secret":"vault://pulselink/reddit/cs"},"github":{"type":"api_key","secret":"env://GITHUB_TOKEN","prefix":"token "},"exa":{"type":"api_key","secret":"env://EXA_API_KEY","prefix":""}}` | Example: |
 
@@ -83,12 +85,13 @@ The MCP Server can be run in `stdio` (local), `streamable-http` (networked), or
 | `MODEL_ID` | `gpt-4o` | Model id for the agent |
 | `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
-_15 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
+_17 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
 
 
-*   `PULSELINK_MCP_URL`: The URL of the target service.
-*   `PULSELINK_MCP_TOKEN`: The API token or access token.
+PulseLink is keyless out of the box — no service URL or token is required. Higher-fidelity
+per-source backends light up when their credential is supplied via `SOURCE_CREDENTIALS`
+(see `.env.example`).
 
 #### stdio Transport (local IDEs — Cursor, Claude Desktop, VS Code)
 
@@ -99,8 +102,8 @@ _15 package + 14 inherited variable(s). Auto-generated from `.env.example` + the
       "command": "uvx",
       "args": ["--from", "pulselink-mcp[mcp]", "pulselink-mcp"],
       "env": {
-        "PULSELINK_MCP_URL": "https://service.example.com",
-        "PULSELINK_MCP_TOKEN": "your_token"
+        "MCP_TOOL_MODE": "condensed",
+        "PULSETOOL": "True"
       }
     }
   }
@@ -119,8 +122,8 @@ _15 package + 14 inherited variable(s). Auto-generated from `.env.example` + the
         "TRANSPORT": "streamable-http",
         "HOST": "0.0.0.0",
         "PORT": "8000",
-        "PULSELINK_MCP_URL": "https://service.example.com",
-        "PULSELINK_MCP_TOKEN": "your_token"
+        "MCP_TOOL_MODE": "condensed",
+        "PULSETOOL": "True"
       }
     }
   }
@@ -148,6 +151,8 @@ This table is auto-generated from the live server — do not edit by hand.
 
 <!-- MCP-TOOLS-TABLE:START -->
 
+#### Condensed action-routed tools (default — `MCP_TOOL_MODE=condensed`)
+
 | MCP Tool | Toggle Env Var | Description |
 |----------|----------------|-------------|
 | `pulse_fetch` | `PULSETOOL` | Fetch one item (full text/body/transcript). CONCEPT:PULSE-001 |
@@ -156,7 +161,23 @@ This table is auto-generated from the live server — do not edit by hand.
 | `pulse_status` | `PULSETOOL` | Per-source backend + credential health (the doctor). CONCEPT:PULSE-001 |
 | `pulse_transcribe` | `PULSETOOL` | Transcribe video/audio to text. CONCEPT:PULSE-005 |
 
-_5 action-routed tools (default `MCP_TOOL_MODE=condensed`). Each is enabled unless its toggle is set false; set `MCP_TOOL_MODE=verbose` (or `both`) for the 1:1 per-operation surface. Auto-generated — do not edit._
+#### Verbose 1:1 API-mapped tools (`MCP_TOOL_MODE=verbose` or `both`)
+
+<details>
+<summary>6 per-operation tools — one per public API method (click to expand)</summary>
+
+| MCP Tool | Toggle Env Var | Description |
+|----------|----------------|-------------|
+| `pulselink_fetch` | `PULSE_LINK_CLIENTTOOL` | Invoke the fetch operation. |
+| `pulselink_list_items` | `PULSE_LINK_CLIENTTOOL` | Invoke the list_items operation. |
+| `pulselink_search` | `PULSE_LINK_CLIENTTOOL` | Invoke the search operation. |
+| `pulselink_sources` | `PULSE_LINK_CLIENTTOOL` | Invoke the sources operation. |
+| `pulselink_status` | `PULSE_LINK_CLIENTTOOL` | Invoke the status operation. |
+| `pulselink_transcribe` | `PULSE_LINK_CLIENTTOOL` | Invoke the transcribe operation. |
+
+</details>
+
+_5 action-routed tool(s) (default) · 6 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (`condensed` default · `verbose` 1:1 · `both`). Auto-generated — do not edit._
 <!-- MCP-TOOLS-TABLE:END -->
 
 ## Environment Variables
@@ -175,11 +196,15 @@ Every variable the server reads.
 | `DEBUG` | Verbose logging | `False` |
 | `PYTHONUNBUFFERED` | Unbuffered stdout (recommended in containers) | `1` |
 
-### Connection & credentials
+### X / xAI Live Search (optional)
+Used by the X source backend; all optional with sensible defaults.
+
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PULSELINK_MCP_URL` | Base URL of the target service | `http://localhost:8080` |
-| `PULSELINK_MCP_TOKEN` | API token / access token | — |
+| `XAI_BASE_URL` | xAI API base URL | `https://api.x.ai/v1` |
+| `XAI_SEARCH_MODEL` | Model used for X live search | `grok-4.3` |
+| `XAI_SEARCH_TIMEOUT_SECONDS` | Per-request timeout (seconds) | `180` |
+| `XAI_SEARCH_RETRIES` | Retry attempts on failure | `2` |
 
 ### Source credentials (keyless-first)
 | Variable | Description | Default |
