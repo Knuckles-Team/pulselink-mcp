@@ -7,10 +7,9 @@
         "pulselink-mcp"
       ],
       "env": {
-        "PULSELINK_MCP_URL": "<YOUR_PULSELINK_MCP_URL>",
-        "PULSELINK_MCP_TOKEN": "<YOUR_PULSELINK_MCP_TOKEN>",
+        "MCP_TOOL_MODE": "condensed",
         "PULSELINK_MCP_SSL_VERIFY": "<YOUR_PULSELINK_MCP_SSL_VERIFY>",
-        "SYSTEMTOOL": "True"
+        "PULSETOOL": "True"
       }
     }
   }
