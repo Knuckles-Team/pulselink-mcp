@@ -8,7 +8,7 @@
 ![PyPI - License](https://img.shields.io/pypi/l/pulselink-mcp)
 ![GitHub last commit (by committer)](https://img.shields.io/github/last-commit/Knuckles-Team/pulselink-mcp)
 
-*Version: 0.3.0*
+*Version: 1.0.0*
 
 > **Documentation** — Installation, deployment, usage across the API, CLI, and MCP
 > interfaces, the integrated A2A agent server, and guidance for provisioning the
