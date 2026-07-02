@@ -1,7 +1,7 @@
 {
   "name": "pulselink-mcp-agent",
   "type": "agent",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "PulseLink — keyless open-web & social research source (MCP Server + A2A Server)",
   "url": "https://github.com/Knuckles-Team/pulselink-mcp/tree/main",
   "license": "MIT",
