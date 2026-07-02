@@ -8,8 +8,9 @@
       ],
       "env": {
         "MCP_TOOL_MODE": "condensed",
-        "PULSELINK_MCP_SSL_VERIFY": "<YOUR_PULSELINK_MCP_SSL_VERIFY>",
-        "PULSETOOL": "True"
+        "PULSETOOL": "True",
+        "XAI_BASE_URL": "https://api.x.ai/v1",
+        "XAI_SEARCH_MODEL": "grok-4.3"
       }
     }
   }
