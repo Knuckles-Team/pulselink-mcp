@@ -1,0 +1,78 @@
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix : <http://knuckles.team/kg#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# PulseLink open-web & social research ontology — the source ladders (YouTube, Reddit, X,
+# Hacker News, the web, RSS/news, GitHub, V2EX, Bilibili …), their fallback backends, and the
+# normalized documents they return. All classes/properties live in the shared `:` (kg#)
+# namespace; only the owl:Ontology node gets the per-package IRI. The retrieved items reuse the
+# shared :Document class (semantic-search fodder) and authors reuse the shared :Person class —
+# neither is redefined here. Backs the pulselink-mcp tool surface (pulse_search / pulse_fetch /
+# pulse_list / pulse_transcribe / pulse_status / pulse_ingest).
+
+:PulseSource a owl:Class ;
+    rdfs:label "Pulse Source" ;
+    rdfs:comment "A keyless open-web / social research source served by a fallback backend ladder (e.g. youtube, reddit, x, hackernews, web, rss, news, github, v2ex, bilibili). Named by pulse_search/pulse_list 'source'." .
+
+:SourceBackend a owl:Class ;
+    rdfs:label "Source Backend" ;
+    rdfs:comment "One way to reach a PulseSource's content — a rung on its fallback ladder (keyless public endpoint, cookie-authenticated path, or official paid API). Reported by pulse_status." .
+
+# --- links (owl:ObjectProperty) ---
+
+:fromSource a owl:ObjectProperty ;
+    rdfs:label "from source" ;
+    rdfs:comment "Links a retrieved :Document to the :PulseSource it was searched/listed/fetched from." ;
+    rdfs:domain :Document ;
+    rdfs:range :PulseSource .
+
+:servedByBackend a owl:ObjectProperty ;
+    rdfs:label "served by backend" ;
+    rdfs:comment "Links a :PulseSource (or the :Document it produced) to the :SourceBackend rung that satisfied the request." ;
+    rdfs:range :SourceBackend .
+
+:hasBackend a owl:ObjectProperty ;
+    rdfs:label "has backend" ;
+    rdfs:comment "Links a :PulseSource to a :SourceBackend on its fallback ladder." ;
+    rdfs:domain :PulseSource ;
+    rdfs:range :SourceBackend .
+
+:authoredBy a owl:ObjectProperty ;
+    rdfs:label "authored by" ;
+    rdfs:comment "Links a retrieved :Document to the :Person who authored the post/article/video." ;
+    rdfs:domain :Document ;
+    rdfs:range :Person .
+
+# --- fields (owl:DatatypeProperty) ---
+
+:sourceKey a owl:DatatypeProperty ;
+    rdfs:label "source key" ;
+    rdfs:comment "The registered PulseLink source name (e.g. 'youtube', 'reddit', 'hackernews')." ;
+    rdfs:range xsd:string .
+
+:backendName a owl:DatatypeProperty ;
+    rdfs:label "backend name" ;
+    rdfs:comment "The winning backend rung that served a request (e.g. 'hn-algolia', 'reddit-public', 'jina-web')." ;
+    rdfs:range xsd:string .
+
+:permalink a owl:DatatypeProperty ;
+    rdfs:label "permalink" ;
+    rdfs:comment "Canonical public URL of the retrieved document on its source." ;
+    rdfs:range xsd:string .
+
+:engagement a owl:DatatypeProperty ;
+    rdfs:label "engagement" ;
+    rdfs:comment "Source-native engagement metrics for a document (points/score/replies/comments), serialized as a compact JSON string." ;
+    rdfs:range xsd:string .
+
+<http://knuckles.team/kg/pulselink> a owl:Ontology ;
+    rdfs:label "PulseLink Open-Web & Social Research Ontology" ;
+    rdfs:comment """PulseLink keyless open-web and social-research model — source ladders and their
+    fallback backends across YouTube, Reddit, X, Hacker News, the web, RSS/news, GitHub, V2EX and
+    Bilibili, plus the normalized documents they return (reusing the shared :Document and :Person
+    classes) — federated into the agent-utilities knowledge-graph hub.""" ;
+    owl:imports <http://knuckles.team/kg> .

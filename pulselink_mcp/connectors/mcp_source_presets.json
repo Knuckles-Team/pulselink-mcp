@@ -1,0 +1,48 @@
+{
+  "_comment": "Tier-1 mcp_tool source presets for pulselink-mcp (AU-KG.ingest.mcp-tool-connector). Each drives pulse_search on a keyless source; results are PulseDocuments ({documents:[...], next_cursor}). Opt-in: nothing ingests until a 'query' is supplied via {\"params\": {\"query\": \"...\"}}. Add other sources by copying an entry and changing the fixed 'source' param (e.g. web, v2ex, bilibili, youtube).",
+  "pulselink-hackernews": {
+    "server": "pulselink-mcp",
+    "tool": "pulse_search",
+    "params_style": "args",
+    "params": {"source": "hackernews", "limit": 25},
+    "records_path": "documents",
+    "id_field": "id",
+    "title_field": "title",
+    "text_field": "text",
+    "updated_field": "created_at",
+    "pagination": "cursor",
+    "cursor_param": "cursor",
+    "cursor_path": "next_cursor",
+    "doc_type": "discussion"
+  },
+  "pulselink-reddit": {
+    "server": "pulselink-mcp",
+    "tool": "pulse_search",
+    "params_style": "args",
+    "params": {"source": "reddit", "limit": 25},
+    "records_path": "documents",
+    "id_field": "id",
+    "title_field": "title",
+    "text_field": "text",
+    "updated_field": "created_at",
+    "pagination": "cursor",
+    "cursor_param": "cursor",
+    "cursor_path": "next_cursor",
+    "doc_type": "social"
+  },
+  "pulselink-news": {
+    "server": "pulselink-mcp",
+    "tool": "pulse_search",
+    "params_style": "args",
+    "params": {"source": "news", "limit": 25},
+    "records_path": "documents",
+    "id_field": "id",
+    "title_field": "title",
+    "text_field": "text",
+    "updated_field": "created_at",
+    "pagination": "cursor",
+    "cursor_param": "cursor",
+    "cursor_path": "next_cursor",
+    "doc_type": "news"
+  }
+}

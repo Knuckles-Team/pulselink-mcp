@@ -38,6 +38,12 @@ pulselink-agent = "pulselink_mcp.agent_server:agent_server"
 [project.entry-points."agent_utilities.skill_providers"]
 pulselink-mcp = "pulselink_mcp.skills"
 
+[project.entry-points."agent_utilities.ontology_providers"]
+pulselink-mcp = "pulselink_mcp.ontology"
+
+[project.entry-points."agent_utilities.source_connector_providers"]
+pulselink-mcp = "pulselink_mcp.connectors"
+
 [project.entry-points."agent_utilities.prompt_providers"]
 pulselink-mcp = "pulselink_mcp.prompts"
 
@@ -59,7 +65,7 @@ dev = [
 ]
 
 [tool.setuptools.package-data]
-pulselink_mcp = [ "mcp_config.json", "prompts/**", "skills/**",]
+pulselink_mcp = [ "mcp_config.json", "prompts/**", "skills/**", "ontology/**", "connectors/**",]
 
 [tool.ruff.lint]
 select = [ "E", "F", "I", "UP", "B",]

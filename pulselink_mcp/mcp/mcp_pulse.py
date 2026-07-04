@@ -10,12 +10,36 @@ server stays async.
 from __future__ import annotations
 
 import asyncio
+import logging
 
 from fastmcp import Context, FastMCP
 from pydantic import Field
 
 from ..auth import get_client
 from ..sources import list_sources
+
+logger = logging.getLogger("pulselink_mcp.mcp")
+
+
+def _maybe_ingest(source: str, result: dict) -> None:
+    """Best-effort, default-on: push a search/list/fetch result's documents into the KG.
+
+    No-ops silently when the result is an error, no engine is reachable, or the KG stack
+    is absent — the reach flow never fails on ingestion.
+    """
+    if not isinstance(result, dict) or result.get("error"):
+        return
+    docs = result.get("documents")
+    if docs is None and result.get("id"):  # a single fetched document
+        docs = [result]
+    if not docs:
+        return
+    try:
+        from ..kg_ingest import ingest_pulse_documents
+
+        ingest_pulse_documents(source, docs)
+    except Exception as e:  # noqa: BLE001 — ingestion is strictly best-effort
+        logger.debug("pulse KG ingest skipped: %s", e)
 
 
 def register_pulse_tools(mcp: FastMCP) -> None:
@@ -37,9 +61,11 @@ def register_pulse_tools(mcp: FastMCP) -> None:
         if ctx:
             ctx.info(f"pulse_search source={source!r} query={query!r}")
         try:
-            return await asyncio.to_thread(
+            result = await asyncio.to_thread(
                 get_client().search, source, query, cursor, limit
             )
+            await asyncio.to_thread(_maybe_ingest, source, result)
+            return result
         except Exception as exc:  # noqa: BLE001 — surface as a tool error, not a crash
             return {"error": str(exc), "source": source}
 
@@ -53,7 +79,9 @@ def register_pulse_tools(mcp: FastMCP) -> None:
         if ctx:
             ctx.info(f"pulse_fetch source={source!r} target={target!r}")
         try:
-            return await asyncio.to_thread(get_client().fetch, source, target)
+            result = await asyncio.to_thread(get_client().fetch, source, target)
+            await asyncio.to_thread(_maybe_ingest, source, result)
+            return result
         except Exception as exc:  # noqa: BLE001
             return {"error": str(exc), "source": source}
 
@@ -72,9 +100,11 @@ def register_pulse_tools(mcp: FastMCP) -> None:
         if ctx:
             ctx.info(f"pulse_list source={source!r} channel={channel!r}")
         try:
-            return await asyncio.to_thread(
+            result = await asyncio.to_thread(
                 get_client().list_items, source, channel, cursor, limit
             )
+            await asyncio.to_thread(_maybe_ingest, source, result)
+            return result
         except Exception as exc:  # noqa: BLE001
             return {"error": str(exc), "source": source}
 
@@ -101,3 +131,45 @@ def register_pulse_tools(mcp: FastMCP) -> None:
         if ctx:
             ctx.info("pulse_status")
         return await asyncio.to_thread(get_client().status)
+
+    @mcp.tool(tags={"pulse", "kg"})
+    async def pulse_ingest(
+        source: str = Field(description="Source to pull from (see pulse_search)."),
+        query: str = Field(
+            default="", description="Search query (used when no channel is given)."
+        ),
+        channel: str = Field(
+            default="",
+            description="Channel/feed/subreddit/node to list from instead of searching.",
+        ),
+        limit: int = Field(default=10, description="Max documents to pull + ingest."),
+        ctx: Context | None = None,
+    ) -> dict:
+        """Search/list a source and natively ingest the results into epistemic-graph.
+
+        Lists via the real PulseLink client (``pulse_list`` when ``channel`` is set,
+        else ``pulse_search``) and pushes the documents as typed :Document nodes linked to
+        their :PulseSource and :Person author. Best-effort: ``ingested`` is ``None`` when no
+        engine is reachable. CONCEPT:AU-KG.ingest.enterprise-source-extractor
+        """
+        if ctx:
+            ctx.info(
+                f"pulse_ingest source={source!r} channel={channel!r} query={query!r}"
+            )
+        try:
+            if channel:
+                result = await asyncio.to_thread(
+                    get_client().list_items, source, channel, None, limit
+                )
+            else:
+                result = await asyncio.to_thread(
+                    get_client().search, source, query, None, limit
+                )
+        except Exception as exc:  # noqa: BLE001
+            return {"error": str(exc), "source": source}
+
+        docs = result.get("documents", [])
+        from ..kg_ingest import ingest_pulse_documents
+
+        ingested = await asyncio.to_thread(ingest_pulse_documents, source, docs)
+        return {"source": source, "listed": len(docs), "ingested": ingested}
