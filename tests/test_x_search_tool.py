@@ -1,6 +1,6 @@
 """Tests for X Search & Browsing Tools (externalized from agent-utilities).
 
-CONCEPT:PULSE-006 — Social sources (X via xAI/Grok index)
+CONCEPT:PK-OS.governance.x-search-browse-tools — Social sources (X via xAI/Grok index)
 """
 
 import json

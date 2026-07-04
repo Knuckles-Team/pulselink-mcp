@@ -1,6 +1,6 @@
 """Social backends: X/Twitter, LinkedIn.
 
-CONCEPT:PULSE-006 — Social sources (auth-laddered; keyless paths are gone)
+CONCEPT:PK-OS.governance.x-search-browse-tools — Social sources (auth-laddered; keyless paths are gone)
 
 X and LinkedIn no longer permit anonymous access, so these backends are
 credential-gated through the shared provider: an official-API backend when a key

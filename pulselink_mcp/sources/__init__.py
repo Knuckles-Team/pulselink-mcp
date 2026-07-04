@@ -1,6 +1,6 @@
 """PulseLink source registry — wires every source to its backend ladder.
 
-CONCEPT:PULSE-001 — the ladders are built here and resolved by name. A source's
+CONCEPT:PK-OS.governance.search-fetch-list-transcribe — the ladders are built here and resolved by name. A source's
 ordered backend list encodes the fallback policy: highest-fidelity / keyless first,
 auth backends below (they only become eligible when their credential exists).
 """

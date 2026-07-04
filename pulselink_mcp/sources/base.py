@@ -1,6 +1,6 @@
 """PulseLink source-backend ladder framework.
 
-CONCEPT:PULSE-001 — Multi-backend source-fallback ladder + health doctor
+CONCEPT:PK-OS.governance.search-fetch-list-transcribe — Multi-backend source-fallback ladder + health doctor
 
 A *source* (``youtube``, ``reddit``, ``x``, …) is served by an ordered list of
 *backends*, each a distinct way to reach the same content: a keyless public

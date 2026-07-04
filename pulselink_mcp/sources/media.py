@@ -1,6 +1,6 @@
 """Media backends: YouTube (yt-dlp) + podcast transcription (Whisper).
 
-CONCEPT:PULSE-005 — Audio/video sources with transcript extraction
+CONCEPT:PK-OS.governance.audio-video-sources-transcript — Audio/video sources with transcript extraction
 """
 
 from __future__ import annotations

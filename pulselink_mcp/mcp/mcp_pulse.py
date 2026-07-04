@@ -1,6 +1,6 @@
 """PulseLink MCP tools — keyless open-web/social research reach.
 
-CONCEPT:PULSE-001 — search/fetch/list/transcribe across every source ladder, plus
+CONCEPT:PK-OS.governance.search-fetch-list-transcribe — search/fetch/list/transcribe across every source ladder, plus
 a server-side ``pulse_status`` doctor reporting per-source backend + credential
 health. Each tool drives the :class:`~pulselink_mcp.api.PulseLinkClient` (over the
 source registry); the blocking HTTP/yt-dlp work runs in a worker thread so the
@@ -33,7 +33,7 @@ def register_pulse_tools(mcp: FastMCP) -> None:
         limit: int = Field(default=10, description="Max results to return."),
         ctx: Context | None = None,
     ) -> dict:
-        """Search a source and return normalized documents. CONCEPT:PULSE-001"""
+        """Search a source and return normalized documents. CONCEPT:PK-OS.governance.search-fetch-list-transcribe"""
         if ctx:
             ctx.info(f"pulse_search source={source!r} query={query!r}")
         try:
@@ -49,7 +49,7 @@ def register_pulse_tools(mcp: FastMCP) -> None:
         target: str = Field(description="URL or source-native id to fetch in full."),
         ctx: Context | None = None,
     ) -> dict:
-        """Fetch one item (full text/body/transcript). CONCEPT:PULSE-001"""
+        """Fetch one item (full text/body/transcript). CONCEPT:PK-OS.governance.search-fetch-list-transcribe"""
         if ctx:
             ctx.info(f"pulse_fetch source={source!r} target={target!r}")
         try:
@@ -68,7 +68,7 @@ def register_pulse_tools(mcp: FastMCP) -> None:
         limit: int = Field(default=10, description="Max items to return."),
         ctx: Context | None = None,
     ) -> dict:
-        """List items from a source channel/feed. CONCEPT:PULSE-001"""
+        """List items from a source channel/feed. CONCEPT:PK-OS.governance.search-fetch-list-transcribe"""
         if ctx:
             ctx.info(f"pulse_list source={source!r} channel={channel!r}")
         try:
@@ -87,7 +87,7 @@ def register_pulse_tools(mcp: FastMCP) -> None:
         ),
         ctx: Context | None = None,
     ) -> dict:
-        """Transcribe video/audio to text. CONCEPT:PULSE-005"""
+        """Transcribe video/audio to text. CONCEPT:PK-OS.governance.audio-video-sources-transcript"""
         if ctx:
             ctx.info(f"pulse_transcribe source={source!r} target={target!r}")
         try:
@@ -97,7 +97,7 @@ def register_pulse_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(tags={"pulse"})
     async def pulse_status(ctx: Context | None = None) -> dict:
-        """Per-source backend + credential health (the doctor). CONCEPT:PULSE-001"""
+        """Per-source backend + credential health (the doctor). CONCEPT:PK-OS.governance.search-fetch-list-transcribe"""
         if ctx:
             ctx.info("pulse_status")
         return await asyncio.to_thread(get_client().status)

@@ -1,6 +1,6 @@
 """China-platform backends: Bilibili, Xiaohongshu, Xueqiu.
 
-CONCEPT:PULSE-007 — China-platform sources
+CONCEPT:PK-OS.governance.china-platform-sources — China-platform sources
 """
 
 from __future__ import annotations

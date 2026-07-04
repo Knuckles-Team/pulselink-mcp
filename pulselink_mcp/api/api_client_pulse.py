@@ -1,6 +1,6 @@
 """PulseLink client facade over the source-ladder registry.
 
-CONCEPT:PULSE-001 — the single object the MCP server and agent use. Unlike a
+CONCEPT:PK-OS.governance.search-fetch-list-transcribe — the single object the MCP server and agent use. Unlike a
 classic single-endpoint API client, PulseLink fans out across many source ladders
 and authenticates per-source through the shared credential provider, so there is no
 base URL / token here — :func:`pulselink_mcp.auth.get_client` constructs it with no

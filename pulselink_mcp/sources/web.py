@@ -1,6 +1,6 @@
 """Keyless web-content backends: generic web (Jina Reader), RSS/Atom, news.
 
-CONCEPT:PULSE-002 — Web & syndication sources
+CONCEPT:PK-OS.governance.web-syndication-sources — Web & syndication sources
 """
 
 from __future__ import annotations

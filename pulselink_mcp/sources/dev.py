@@ -1,6 +1,6 @@
 """Developer-source backends: GitHub, Exa semantic search.
 
-CONCEPT:PULSE-004 — Developer & semantic-search sources
+CONCEPT:PK-OS.governance.developer-semantic-search-sources — Developer & semantic-search sources
 """
 
 from __future__ import annotations

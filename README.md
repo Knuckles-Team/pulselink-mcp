@@ -146,11 +146,11 @@ This table is auto-generated from the live server — do not edit by hand.
 
 | MCP Tool | Toggle Env Var | Description |
 |----------|----------------|-------------|
-| `pulse_fetch` | `PULSETOOL` | Fetch one item (full text/body/transcript). CONCEPT:PULSE-001 |
-| `pulse_list` | `PULSETOOL` | List items from a source channel/feed. CONCEPT:PULSE-001 |
-| `pulse_search` | `PULSETOOL` | Search a source and return normalized documents. CONCEPT:PULSE-001 |
-| `pulse_status` | `PULSETOOL` | Per-source backend + credential health (the doctor). CONCEPT:PULSE-001 |
-| `pulse_transcribe` | `PULSETOOL` | Transcribe video/audio to text. CONCEPT:PULSE-005 |
+| `pulse_fetch` | `PULSETOOL` | Fetch one item (full text/body/transcript). CONCEPT:PK-OS.governance.search-fetch-list-transcribe |
+| `pulse_list` | `PULSETOOL` | List items from a source channel/feed. CONCEPT:PK-OS.governance.search-fetch-list-transcribe |
+| `pulse_search` | `PULSETOOL` | Search a source and return normalized documents. CONCEPT:PK-OS.governance.search-fetch-list-transcribe |
+| `pulse_status` | `PULSETOOL` | Per-source backend + credential health (the doctor). CONCEPT:PK-OS.governance.search-fetch-list-transcribe |
+| `pulse_transcribe` | `PULSETOOL` | Transcribe video/audio to text. CONCEPT:PK-OS.governance.audio-video-sources-transcript |
 
 #### Verbose 1:1 API-mapped tools (`MCP_TOOL_MODE=verbose` or `both`)
 

@@ -8,7 +8,7 @@ def test_concepts_doc_exists():
 
 
 def test_eco_bridge_present():
-    assert "ECO-4.0" in CONCEPTS_DOC.read_text(encoding="utf-8")
+    assert "AU-ECO.messaging.native-backend-abstraction" in CONCEPTS_DOC.read_text(encoding="utf-8")
 
 
 def test_prefix_registered():

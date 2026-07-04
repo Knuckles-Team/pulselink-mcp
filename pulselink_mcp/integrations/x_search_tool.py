@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """X (formerly Twitter) Search and Browsing Tools.
 
-CONCEPT:PULSE-006 — Social sources (X via xAI/Grok's live index)
+CONCEPT:PK-OS.governance.x-search-browse-tools — Social sources (X via xAI/Grok's live index)
 
 Externalized from agent-utilities (was ``agent_utilities/tools/x_search_tool.py``):
 PulseLink is the home for X reach, so the X-specific search/browse tools and their
@@ -249,7 +249,7 @@ async def x_search(
     }
 
     # 5. Execute HTTP Request with Retries — declarative ResiliencePolicy
-    # (CONCEPT:ORCH-1.36): the historical linear 1.5s/3.0s/... delays capped
+    # (CONCEPT:AU-ORCH.execution.retry-predicate-raised-treating): the historical linear 1.5s/3.0s/... delays capped
     # at 5s, retrying connection errors and 5xx only.
     def _retryable(exc: BaseException) -> bool:
         if isinstance(exc, httpx.HTTPStatusError):

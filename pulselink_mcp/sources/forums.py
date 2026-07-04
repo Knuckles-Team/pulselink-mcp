@@ -1,6 +1,6 @@
 """Community/forum backends: Hacker News, Reddit, V2EX.
 
-CONCEPT:PULSE-003 — Community & discussion sources
+CONCEPT:PK-OS.governance.community-discussion-sources — Community & discussion sources
 """
 
 from __future__ import annotations
