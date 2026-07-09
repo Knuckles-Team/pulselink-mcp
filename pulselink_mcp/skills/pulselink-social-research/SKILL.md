@@ -1,5 +1,6 @@
 ---
 name: pulselink-social-research
+skill_type: skill
 description: >-
   Keyless social & community research over the pulselink-mcp MCP server — search,
   list, and fetch posts/threads/comments from Reddit, Hacker News, X, LinkedIn and

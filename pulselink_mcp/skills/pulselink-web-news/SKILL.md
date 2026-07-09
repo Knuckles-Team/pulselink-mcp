@@ -1,5 +1,6 @@
 ---
 name: pulselink-web-news
+skill_type: skill
 description: >-
   Keyless open-web, RSS, and news research over the pulselink-mcp MCP server — read
   a web page as clean text (via Jina), pull items from any RSS feed, search Google

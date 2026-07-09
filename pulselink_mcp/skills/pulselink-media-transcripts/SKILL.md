@@ -1,5 +1,6 @@
 ---
 name: pulselink-media-transcripts
+skill_type: skill
 description: >-
   Keyless video & audio research over the pulselink-mcp MCP server — search YouTube,
   Bilibili and podcasts, and turn a video/episode into a text transcript (yt-dlp
