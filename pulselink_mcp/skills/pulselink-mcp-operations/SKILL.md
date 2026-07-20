@@ -1,5 +1,6 @@
 ---
 name: pulselink-mcp-operations
+skill_type: skill
 description: >-
   Operate pulselink-mcp through its governed MCP and GraphOS capabilities, including pulselink media transcripts, pulselink social research, pulselink web news. Use when a request requires this provider's read, change, automation, ingestion, troubleshooting, or evidence workflows.
 ---
