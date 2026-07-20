@@ -1,0 +1,42 @@
+schema_version: '1'
+connector: pulselink-mcp
+ontology_source: pulselink
+sync:
+- preset: pulselink-hackernews
+  server: pulselink-mcp
+  tool: pulse_search
+  action: null
+  records_path: documents
+  id_field: id
+  title_field: title
+  text_field: text
+  updated_field: created_at
+  doc_type: discussion
+  tool_schema_sha256: 614e86e2336ad78afc5d04f4a9b15e950e0e5c6d52de6d068ff5a24bec143c71
+- preset: pulselink-news
+  server: pulselink-mcp
+  tool: pulse_search
+  action: null
+  records_path: documents
+  id_field: id
+  title_field: title
+  text_field: text
+  updated_field: created_at
+  doc_type: news
+  tool_schema_sha256: 614e86e2336ad78afc5d04f4a9b15e950e0e5c6d52de6d068ff5a24bec143c71
+- preset: pulselink-reddit
+  server: pulselink-mcp
+  tool: pulse_search
+  action: null
+  records_path: documents
+  id_field: id
+  title_field: title
+  text_field: text
+  updated_field: created_at
+  doc_type: social
+  tool_schema_sha256: 614e86e2336ad78afc5d04f4a9b15e950e0e5c6d52de6d068ff5a24bec143c71
+governance:
+  default_acl: quarantine
+  identity: opaque-reference
+  tenant: required-at-materialization
+  provenance: required-at-materialization

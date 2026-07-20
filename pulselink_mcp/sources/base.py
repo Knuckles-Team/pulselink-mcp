@@ -21,10 +21,15 @@ provider (OS-5.38/5.39) rather than ad-hoc per-source secret reads.
 
 from __future__ import annotations
 
+import atexit
 import logging
 from typing import Any
 
 import requests
+from agent_utilities.core.transport_security import (
+    ResolvedTLSProfile,
+    resolve_configured_tls_profile,
+)
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger("pulselink.sources")
@@ -77,42 +82,32 @@ class BackendHealth(BaseModel):
     detail: str = ""
 
 
-class _KeylessMaterial:
-    """Null auth material — contributes nothing (keyless / no provider)."""
-
-    headers: dict[str, str] = {}
-    params: dict[str, str] = {}
-    cookies: dict[str, str] = {}
-
-    @staticmethod
-    def merged_into(
-        headers: dict[str, str] | None = None,
-        params: dict[str, str] | None = None,
-        cookies: dict[str, str] | None = None,
-    ) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
-        return dict(headers or {}), dict(params or {}), dict(cookies or {})
-
-
-class _KeylessCredential:
-    def materialize(self) -> _KeylessMaterial:
-        return _KeylessMaterial()
-
-
-class _NullProvider:
-    """Fallback provider when the installed agent-utilities predates OS-5.38.
-
-    Reports no credentials (so auth backends stay dark and the ladder uses its
-    keyless backend) and applies nothing — keyless sources still work everywhere.
-    """
-
-    def available(self, source: str) -> bool:
-        return False
-
-    def get(self, source: str) -> _KeylessCredential:
-        return _KeylessCredential()
-
-
 _PROVIDER_OVERRIDE: Any = None
+_HTTP_SESSION: requests.Session | None = None
+_TLS_PROFILE: ResolvedTLSProfile | None = None
+
+
+def configured_session() -> requests.Session:
+    """Return the process-wide Requests session under the AgentConfig TLS policy."""
+    global _HTTP_SESSION, _TLS_PROFILE
+    if _HTTP_SESSION is None:
+        _TLS_PROFILE = resolve_configured_tls_profile("pulselink")
+        _HTTP_SESSION = _TLS_PROFILE.configure_requests_session(requests.Session())
+    return _HTTP_SESSION
+
+
+def close_configured_session() -> None:
+    """Release the shared session and runtime-only TLS material."""
+    global _HTTP_SESSION, _TLS_PROFILE
+    if _HTTP_SESSION is not None:
+        _HTTP_SESSION.close()
+    if _TLS_PROFILE is not None:
+        _TLS_PROFILE.cleanup()
+    _HTTP_SESSION = None
+    _TLS_PROFILE = None
+
+
+atexit.register(close_configured_session)
 
 
 def set_credential_provider(provider: Any) -> None:
@@ -122,21 +117,14 @@ def set_credential_provider(provider: Any) -> None:
 
 
 def _provider() -> Any:
-    """Return the shared credential provider.
-
-    Prefers the unified agent-utilities provider (OS-5.38); falls back to a keyless
-    null provider when that module is unavailable, so PulseLink runs standalone.
-    """
+    """Return the required shared credential provider."""
     if _PROVIDER_OVERRIDE is not None:
         return _PROVIDER_OVERRIDE
-    try:
-        from agent_utilities.security.credential_provider import (
-            get_credential_provider,
-        )
+    from agent_utilities.security.credential_provider import (
+        get_credential_provider,
+    )
 
-        return get_credential_provider()
-    except Exception:  # noqa: BLE001 — version skew / missing module → keyless mode
-        return _NullProvider()
+    return get_credential_provider()
 
 
 class SourceBackend:
@@ -196,7 +184,13 @@ class SourceBackend:
     ) -> requests.Response:
         """Authenticated GET applying this backend's credential material."""
         h, p, c = self._auth(headers, params)
-        resp = requests.get(url, params=p, headers=h, cookies=c, timeout=timeout)
+        resp = configured_session().get(
+            url,
+            params=p,
+            headers=h,
+            cookies=c,
+            timeout=timeout,
+        )
         resp.raise_for_status()
         return resp
 
@@ -247,13 +241,13 @@ class SourceLadder:
             except CapabilityUnsupported:
                 continue
             except Exception as exc:  # noqa: BLE001 — try the next backend in the ladder
-                errors.append(f"{backend.name}: {exc}")
+                errors.append(f"{backend.name}: {type(exc).__name__}")
                 logger.warning(
-                    "[%s] backend %s failed %s: %s",
+                    "[%s] backend %s failed %s (error_type=%s)",
                     self.source,
                     backend.name,
                     capability,
-                    exc,
+                    type(exc).__name__,
                 )
                 continue
         raise RuntimeError(

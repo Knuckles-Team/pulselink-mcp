@@ -2,9 +2,6 @@
 
 import importlib
 import inspect
-import warnings
-
-warnings.filterwarnings("ignore", message=".*urllib3.*or chardet.*")
 
 __all__: list[str] = []
 

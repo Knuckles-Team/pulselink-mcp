@@ -1,0 +1,37 @@
+{
+  "api_version": "graphos.io/v1",
+  "artifacts": {
+    "a2a.json": "a6a206b78340362e3e1571c754b941916ec9232a29a515f1bf90eda96930ede5",
+    "connector_manifest.yml": "4c5b0f78f547e1441f85da54e797acbeee10dce12e8e7853940490db51957b94",
+    "pulselink_mcp/connectors/mcp_source_presets.json": "a32173afd7eedb615fda7fde039bf27bd3172969184d8bec2ba0198993fad395",
+    "pulselink_mcp/connectors/tool_schema_fingerprints.json": "53d49dc0ffbf76db4eaa801e159d4ec72b80fa4e7d64cc7ea4350b514ec795a2",
+    "pulselink_mcp/ontology/fixtures/records.json": "a862b9027ab56ecbd7c5a8692eb76ee3a70aeadbc5c66504215ca63ec4243eae",
+    "pulselink_mcp/ontology/mappings/source.yaml": "719f2705fe1fa4bfccfbd3ce49984ae64007ae7123a3bb4363145e6a640aa10d",
+    "pulselink_mcp/ontology/migrations/manifest.json": "65f394410a572086e15e41c07a6a41ebe9ede69c6221940f85efa2fe0812c135",
+    "pulselink_mcp/ontology/pulselink.ttl": "89d9576f2051b16117057a6add7fad7012e87ad24ca421fa987d695957607eac",
+    "pulselink_mcp/ontology/shapes/connector.shacl.ttl": "a0a82d3b06d31f4d1b6c7ac246677129ee3fe8ab98502a7e39d3708a4bca4d07"
+  },
+  "checks": {
+    "declared_tool_schema": "passed",
+    "manifest_integrity": "passed",
+    "privacy_contract": "passed",
+    "shacl_parse": "passed",
+    "synthetic_fixture_contract": "passed"
+  },
+  "compatibility": {
+    "agent_utilities": ">=1.27.1,<2",
+    "bundle_schema": "2",
+    "epistemic_graph": ">=2.23.1,<3"
+  },
+  "connector": "pulselink-mcp",
+  "kind": "ConnectorSourceAttestation",
+  "live_certified": false,
+  "mode": "offline-source",
+  "schema_version": "2",
+  "signature": "j3cpKDW0QgdTMVfiaRs9tQhDIfDQTWEB5BNlcf0PwLzHrveMUB3vBqZl6Ey2yEUKGWJqdvEegvrIroDkFb0IAA",
+  "signature_algorithm": "ed25519",
+  "signer": "ontology-manifest-generator",
+  "signing_public_key": "q0Cp7bmQMqJhbofGKKw8xXC6KbFzukBDDke0UYVi8y4",
+  "status": "source-validated",
+  "validated_at": "2026-07-18T00:00:00Z"
+}

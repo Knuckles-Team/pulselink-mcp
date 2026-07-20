@@ -2,7 +2,6 @@
 import logging
 import os
 import sys
-import warnings
 
 __version__ = "1.0.1"
 
@@ -22,9 +21,6 @@ def agent_server():
         initialize_workspace,
         load_identity,
     )
-
-    warnings.filterwarnings("ignore", message=".*urllib3.*or chardet.*")
-    warnings.filterwarnings("ignore", category=DeprecationWarning, module="fastmcp")
 
     initialize_workspace()
     meta = load_identity()

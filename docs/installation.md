@@ -32,5 +32,5 @@ pip install -e ".[all]"
 ## Docker
 
 ```bash
-docker pull knucklessg1/pulselink-mcp:latest
+docker pull example/pulselink-mcp@sha256:<digest>
 ```

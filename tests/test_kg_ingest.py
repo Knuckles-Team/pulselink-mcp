@@ -8,6 +8,9 @@ CONCEPT:AU-KG.ingest.enterprise-source-extractor.
 
 from __future__ import annotations
 
+import pytest
+from agent_utilities.knowledge_graph.memory.native_ingest import NativeIngestError
+
 from pulselink_mcp.kg_ingest import (
     ingest_documents,
     ingest_entities,
@@ -18,6 +21,7 @@ from pulselink_mcp.kg_ingest import (
 class _FakeTxn:
     def __init__(self):
         self.nodes = {}
+        self.edges = []
         self.committed = False
 
     def begin(self, graph=None):
@@ -27,33 +31,27 @@ class _FakeTxn:
     def add_node(self, txn, node_id, props):
         self.nodes[node_id] = props
 
+    def add_edge(self, txn, source, target, props):
+        self.edges.append((source, target, props))
+
     def commit(self, txn):
         self.committed = True
         return True
 
 
-class _FakeEdges:
-    def __init__(self):
-        self.edges = []
-
-    def add(self, src, dst, props):
-        self.edges.append((src, dst, props))
-
-
 class _FakeClient:
     def __init__(self):
         self.txn = _FakeTxn()
-        self.edges = _FakeEdges()
 
 
 def test_ingest_entities_writes_nodes_and_edges():
     c = _FakeClient()
     res = ingest_entities(
         [
-            {"id": "a", "type": "Document", "text": "hi"},
-            {"id": "b", "type": "PulseSource"},
+            {"id": "a", "node_type": "Document", "text": "hi"},
+            {"id": "b", "node_type": "PulseSource"},
         ],
-        [{"source": "a", "target": "b", "type": "fromSource"}],
+        [{"source": "a", "target": "b", "relationship": "fromSource"}],
         client=c,
         graph="__commons__",
     )
@@ -63,7 +61,7 @@ def test_ingest_entities_writes_nodes_and_edges():
     # provenance is stamped
     assert c.txn.nodes["a"]["source"] == "pulselink-mcp"
     assert c.txn.nodes["a"]["domain"] == "pulselink"
-    assert c.edges.edges == [("a", "b", {"type": "fromSource"})]
+    assert c.txn.edges == [("a", "b", {"relationship": "fromSource"})]
 
 
 def test_ingest_documents_sets_type_and_keeps_text():
@@ -74,13 +72,14 @@ def test_ingest_documents_sets_type_and_keeps_text():
         graph="__commons__",
     )
     assert res == {"nodes": 1, "edges": 0}
-    assert c.txn.nodes["d1"]["type"] == "Document"
+    assert c.txn.nodes["d1"]["node_type"] == "Document"
     assert c.txn.nodes["d1"]["text"] == "body"
 
 
-def test_ingest_documents_skips_textless():
+def test_ingest_documents_rejects_textless_input():
     c = _FakeClient()
-    assert ingest_documents([{"id": "d1", "title": "no text"}], client=c) is None
+    with pytest.raises(NativeIngestError, match="at least one document"):
+        ingest_documents([{"id": "d1", "title": "no text"}], client=c)
 
 
 def test_ingest_pulse_documents_maps_source_person_and_links():
@@ -100,25 +99,25 @@ def test_ingest_pulse_documents_maps_source_person_and_links():
     res = ingest_pulse_documents("hackernews", documents, client=c, graph="__commons__")
     # 3 nodes: PulseSource + Document + Person
     assert res == {"nodes": 3, "edges": 2}
-    assert c.txn.nodes["pulselink:source:hackernews"]["type"] == "PulseSource"
+    assert c.txn.nodes["pulselink:source:hackernews"]["node_type"] == "PulseSource"
     doc = c.txn.nodes["pulselink:document:hackernews:42"]
-    assert doc["type"] == "Document"
+    assert doc["node_type"] == "Document"
     assert doc["text"] == "the body"
     assert doc["permalink"] == "https://news.ycombinator.com/item?id=42"
     assert doc["backendName"] == "hn-algolia"
     assert doc["engagement"] == '{"points": 100}'
     assert doc["externalToolId"] == "42"
-    assert c.txn.nodes["pulselink:person:pg"]["type"] == "Person"
+    assert c.txn.nodes["pulselink:person:pg"]["node_type"] == "Person"
     assert (
         "pulselink:document:hackernews:42",
         "pulselink:source:hackernews",
-        {"type": "fromSource"},
-    ) in c.edges.edges
+        {"relationship": "fromSource"},
+    ) in c.txn.edges
     assert (
         "pulselink:document:hackernews:42",
         "pulselink:person:pg",
-        {"type": "authoredBy"},
-    ) in c.edges.edges
+        {"relationship": "authoredBy"},
+    ) in c.txn.edges
 
 
 def test_ingest_pulse_documents_dedupes_author_person():
@@ -133,20 +132,20 @@ def test_ingest_pulse_documents_dedupes_author_person():
     assert "pulselink:person:alice" in c.txn.nodes
 
 
-def test_ingest_pulse_documents_skips_docs_without_id_or_text():
-    c = _FakeClient()
-    documents = [
-        {"id": "", "text": "no id"},
-        {"id": "x", "text": ""},
-    ]
-    assert ingest_pulse_documents("web", documents, client=c) is None
+def test_ingest_pulse_documents_rejects_unusable_documents():
+    documents = [{"id": "", "text": "no id"}, {"id": "x", "text": ""}]
+    with pytest.raises(NativeIngestError, match="at least one document"):
+        ingest_pulse_documents("web", documents, client=_FakeClient())
 
 
-def test_ingest_noops_without_engine():
-    # No injected client + no reachable engine -> clean no-op.
-    assert ingest_entities([{"id": "a", "type": "Document"}]) is None
+def test_retired_node_type_alias_is_rejected():
+    with pytest.raises(NativeIngestError, match="canonical node_type"):
+        ingest_entities(
+            [{"id": "retired", "type": "RetiredAlias"}],
+            client=_FakeClient(),
+        )
 
 
-def test_ingest_empty_is_noop():
-    assert ingest_entities([], client=_FakeClient()) is None
-    assert ingest_pulse_documents("web", [], client=_FakeClient()) is None
+def test_empty_native_ingest_is_rejected():
+    with pytest.raises(NativeIngestError, match="at least one entity"):
+        ingest_entities([], client=_FakeClient())

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pulselink MCP Operations"
+  short_description: "Help with Pulselink MCP Operations tasks"
+  default_prompt: "Use $pulselink-mcp-operations to complete a governed provider workflow."

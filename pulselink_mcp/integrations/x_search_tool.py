@@ -24,6 +24,7 @@ from typing import Any
 import httpx
 from agent_utilities.core.config import setting
 from agent_utilities.core.http_client import create_http_client
+from agent_utilities.core.transport_security import resolve_configured_tls_profile
 from agent_utilities.harness.tracing import trace
 from agent_utilities.models import AgentDeps
 from agent_utilities.orchestration.resilience import (
@@ -216,8 +217,8 @@ async def x_search(
             )
 
         _validate_date_range(from_date or "", to_date or "")
-    except ValueError as exc:
-        return json.dumps({"success": False, "error": str(exc)})
+    except ValueError:
+        return json.dumps({"success": False, "error": "Operation failed"})
 
     # 4. Construct Tool Constraint
     tool_def: dict[str, Any] = {"type": "x_search"}
@@ -249,18 +250,29 @@ async def x_search(
     }
 
     # 5. Execute HTTP Request with Retries — declarative ResiliencePolicy
-    # (CONCEPT:AU-ORCH.execution.retry-predicate-raised-treating): the historical linear 1.5s/3.0s/... delays capped
-    # at 5s, retrying connection errors and 5xx only.
+    # (CONCEPT:AU-ORCH.execution.retry-predicate-raised-treating): bounded
+    # delays retry connection errors and 5xx responses only.
     def _retryable(exc: BaseException) -> bool:
         if isinstance(exc, httpx.HTTPStatusError):
             return exc.response.status_code >= 500
         return isinstance(exc, httpx.RequestError | httpx.TimeoutException)
 
     def _post_once() -> dict[str, Any]:
-        with create_http_client(timeout=float(timeout)) as client:
-            resp = client.post(f"{base_url}/responses", headers=headers, json=payload)
-            resp.raise_for_status()
-            return resp.json()
+        profile = resolve_configured_tls_profile("model")
+        try:
+            with create_http_client(
+                timeout=float(timeout),
+                **profile.httpx_kwargs(),
+            ) as client:
+                resp = client.post(
+                    f"{base_url}/responses",
+                    headers=headers,
+                    json=payload,
+                )
+                resp.raise_for_status()
+                return resp.json()
+        finally:
+            profile.cleanup()
 
     policy = ResiliencePolicy(
         max_attempts=max_retries + 1,
@@ -277,9 +289,9 @@ async def x_search(
     try:
         response_data = await run_with_resilience(_post_once, policy)
     except httpx.HTTPStatusError as exc:
-        last_error = f"HTTP {exc.response.status_code}: {exc.response.text}"
+        last_error = f"HTTP {exc.response.status_code}"
     except (httpx.RequestError, httpx.TimeoutException) as exc:
-        last_error = f"Connection error: {exc}"
+        last_error = f"Connection error: {type(exc).__name__}"
 
     if not response_data:
         return json.dumps(
@@ -395,7 +407,7 @@ async def browse_x_post(
     query = " ".join(query_parts)
 
     # 4. Delegate to x_search to perform the actual lookup and synthesis
-    logger.info("Executing browse_x_post lookup for status ID %s", post_id)
+    logger.info("Executing configured social-post lookup")
     search_result_str = await x_search(
         ctx=ctx,
         query=query,
@@ -435,15 +447,15 @@ async def browse_x_post(
                 else:
                     logger.debug("auto_ingest=True but no graph in ctx.deps; skipping")
             except Exception as e:
-                logger.warning("Auto-ingest failed for post %s: %s", post_id, e)
+                logger.warning("Operation failed: error_type=%s", type(e).__name__)
 
         return json.dumps(res, ensure_ascii=False)
 
-    except Exception as exc:
+    except Exception:
         return json.dumps(
             {
                 "success": False,
-                "error": f"Failed to parse browse result: {exc}",
+                "error": "Failed to parse browse result",
             }
         )
 

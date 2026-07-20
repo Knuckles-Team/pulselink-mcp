@@ -22,11 +22,7 @@ logger = logging.getLogger("pulselink_mcp.mcp")
 
 
 def _maybe_ingest(source: str, result: dict) -> None:
-    """Best-effort, default-on: push a search/list/fetch result's documents into the KG.
-
-    No-ops silently when the result is an error, no engine is reachable, or the KG stack
-    is absent — the reach flow never fails on ingestion.
-    """
+    """Push a search/list/fetch result's documents into the authoritative KG."""
     if not isinstance(result, dict) or result.get("error"):
         return
     docs = result.get("documents")
@@ -34,12 +30,9 @@ def _maybe_ingest(source: str, result: dict) -> None:
         docs = [result]
     if not docs:
         return
-    try:
-        from ..kg_ingest import ingest_pulse_documents
+    from ..kg_ingest import ingest_pulse_documents
 
-        ingest_pulse_documents(source, docs)
-    except Exception as e:  # noqa: BLE001 — ingestion is strictly best-effort
-        logger.debug("pulse KG ingest skipped: %s", e)
+    ingest_pulse_documents(source, docs)
 
 
 def register_pulse_tools(mcp: FastMCP) -> None:
@@ -59,15 +52,15 @@ def register_pulse_tools(mcp: FastMCP) -> None:
     ) -> dict:
         """Search a source and return normalized documents. CONCEPT:PK-OS.governance.search-fetch-list-transcribe"""
         if ctx:
-            ctx.info(f"pulse_search source={source!r} query={query!r}")
+            ctx.info("Executing configured pulse search")
         try:
             result = await asyncio.to_thread(
                 get_client().search, source, query, cursor, limit
             )
             await asyncio.to_thread(_maybe_ingest, source, result)
             return result
-        except Exception as exc:  # noqa: BLE001 — surface as a tool error, not a crash
-            return {"error": str(exc), "source": source}
+        except Exception:  # noqa: BLE001 — surface as a tool error, not a crash
+            return {"error": "Operation failed", "source": source}
 
     @mcp.tool(tags={"pulse"})
     async def pulse_fetch(
@@ -82,8 +75,8 @@ def register_pulse_tools(mcp: FastMCP) -> None:
             result = await asyncio.to_thread(get_client().fetch, source, target)
             await asyncio.to_thread(_maybe_ingest, source, result)
             return result
-        except Exception as exc:  # noqa: BLE001
-            return {"error": str(exc), "source": source}
+        except Exception:  # noqa: BLE001
+            return {"error": "Operation failed", "source": source}
 
     @mcp.tool(tags={"pulse"})
     async def pulse_list(
@@ -105,8 +98,8 @@ def register_pulse_tools(mcp: FastMCP) -> None:
             )
             await asyncio.to_thread(_maybe_ingest, source, result)
             return result
-        except Exception as exc:  # noqa: BLE001
-            return {"error": str(exc), "source": source}
+        except Exception:  # noqa: BLE001
+            return {"error": "Operation failed", "source": source}
 
     @mcp.tool(tags={"pulse"})
     async def pulse_transcribe(
@@ -122,8 +115,8 @@ def register_pulse_tools(mcp: FastMCP) -> None:
             ctx.info(f"pulse_transcribe source={source!r} target={target!r}")
         try:
             return await asyncio.to_thread(get_client().transcribe, target, source)
-        except Exception as exc:  # noqa: BLE001
-            return {"error": str(exc), "source": source}
+        except Exception:  # noqa: BLE001
+            return {"error": "Operation failed", "source": source}
 
     @mcp.tool(tags={"pulse"})
     async def pulse_status(ctx: Context | None = None) -> dict:
@@ -149,8 +142,8 @@ def register_pulse_tools(mcp: FastMCP) -> None:
 
         Lists via the real PulseLink client (``pulse_list`` when ``channel`` is set,
         else ``pulse_search``) and pushes the documents as typed :Document nodes linked to
-        their :PulseSource and :Person author. Best-effort: ``ingested`` is ``None`` when no
-        engine is reachable. CONCEPT:AU-KG.ingest.enterprise-source-extractor
+        their :PulseSource and :Person author. Native-ingest failures propagate to the
+        caller. CONCEPT:AU-KG.ingest.enterprise-source-extractor
         """
         if ctx:
             ctx.info(
@@ -165,8 +158,8 @@ def register_pulse_tools(mcp: FastMCP) -> None:
                 result = await asyncio.to_thread(
                     get_client().search, source, query, None, limit
                 )
-        except Exception as exc:  # noqa: BLE001
-            return {"error": str(exc), "source": source}
+        except Exception:  # noqa: BLE001
+            return {"error": "Operation failed", "source": source}
 
         docs = result.get("documents", [])
         from ..kg_ingest import ingest_pulse_documents

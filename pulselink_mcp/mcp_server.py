@@ -5,11 +5,9 @@ import sys
 from typing import Any
 
 from agent_utilities.base_utilities import get_logger
-from agent_utilities.mcp_utilities import (
-    create_mcp_server,
-    load_config,
-    register_tool_surface,
-)
+from agent_utilities.core.config import load_config
+from agent_utilities.mcp.server_factory import create_mcp_server
+from agent_utilities.mcp.verbose_tools import register_tool_surface
 
 from pulselink_mcp.api import PulseLinkClient
 from pulselink_mcp.auth import get_client

@@ -5,7 +5,7 @@ CONCEPT:PK-OS.governance.developer-semantic-search-sources — Developer & seman
 
 from __future__ import annotations
 
-from .base import PulseDocument, PulseResult, SourceBackend
+from .base import PulseDocument, PulseResult, SourceBackend, configured_session
 
 
 class GitHubPublicBackend(SourceBackend):
@@ -81,9 +81,7 @@ class ExaBackend(SourceBackend):
 
     def search(self, query: str, cursor: str | None, limit: int) -> PulseResult:
         h, _, c = self._auth(headers={"Content-Type": "application/json"})
-        import requests
-
-        resp = requests.post(
+        resp = configured_session().post(
             self._API,
             json={"query": query, "numResults": limit, "contents": {"text": True}},
             headers=h,

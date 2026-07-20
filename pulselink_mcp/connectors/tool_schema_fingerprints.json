@@ -1,0 +1,8 @@
+{
+  "algorithm": "agent-utilities:mcp-tool-schema-compat:v1",
+  "connector": "pulselink-mcp",
+  "schema_version": "1",
+  "tools": {
+    "pulse_search": "614e86e2336ad78afc5d04f4a9b15e950e0e5c6d52de6d068ff5a24bec143c71"
+  }
+}

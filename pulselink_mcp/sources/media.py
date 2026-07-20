@@ -5,7 +5,13 @@ CONCEPT:PK-OS.governance.audio-video-sources-transcript — Audio/video sources 
 
 from __future__ import annotations
 
-from .base import CapabilityUnsupported, PulseDocument, PulseResult, SourceBackend
+from .base import (
+    CapabilityUnsupported,
+    PulseDocument,
+    PulseResult,
+    SourceBackend,
+    configured_session,
+)
 
 
 class YouTubeBackend(SourceBackend):
@@ -86,8 +92,6 @@ class YouTubeBackend(SourceBackend):
 
 def _extract_subtitle_text(info: dict) -> str:
     """Download and flatten the best available English caption track to text."""
-    import requests
-
     tracks: dict[str, list[dict[str, str]]] = {}
     tracks.update(info.get("subtitles") or {})
     tracks.update(info.get("automatic_captions") or {})
@@ -99,7 +103,7 @@ def _extract_subtitle_text(info: dict) -> str:
             (f for f in fmts if f.get("ext") in ("json3", "vtt", "srv1")), fmts[0]
         )
         try:
-            raw = requests.get(chosen["url"], timeout=30).text
+            raw = configured_session().get(chosen["url"], timeout=30).text
         except Exception:  # nosec B112  # noqa: BLE001 - best-effort: skip a caption track that fails to download and try the next language
             continue
         return _strip_caption_markup(raw, chosen.get("ext", ""))
@@ -143,8 +147,6 @@ class PodcastBackend(SourceBackend):
     def transcribe(self, url_or_id: str) -> PulseDocument:
         import tempfile
 
-        import requests
-
         try:
             from faster_whisper import WhisperModel
         except ImportError as exc:  # pragma: no cover - optional dep
@@ -152,7 +154,7 @@ class PodcastBackend(SourceBackend):
                 "faster-whisper not installed — install pulselink-mcp[audio]"
             ) from exc
         with tempfile.NamedTemporaryFile(suffix=".audio", delete=True) as fh:
-            audio = requests.get(url_or_id, timeout=120, stream=True)
+            audio = configured_session().get(url_or_id, timeout=120, stream=True)
             audio.raise_for_status()
             for chunk in audio.iter_content(chunk_size=1 << 16):
                 fh.write(chunk)

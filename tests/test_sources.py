@@ -87,7 +87,7 @@ class FakeResp:
 
 @pytest.fixture
 def captured_get(monkeypatch):
-    """Patch ``requests.get`` in the sources base module; record calls."""
+    """Inject a configured session into the source base; record calls."""
     calls = []
 
     def fake_get(url, params=None, headers=None, cookies=None, timeout=None):
@@ -97,7 +97,11 @@ def captured_get(monkeypatch):
         return calls_resp["resp"]
 
     calls_resp = {"resp": FakeResp({})}
-    monkeypatch.setattr(base_mod.requests, "get", fake_get)
+
+    class FakeSession:
+        get = staticmethod(fake_get)
+
+    monkeypatch.setattr(base_mod, "configured_session", lambda: FakeSession())
     return calls, calls_resp
 
 

@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 try:
     from pulselink_mcp.agent_server import agent_server  # noqa: F401
 except ImportError as e:
-    print(f"Agent import failed: {e}")
+    print(f"Operation failed: {type(e).__name__}")
     sys.exit(1)
 
 print("Agent entry point import OK")

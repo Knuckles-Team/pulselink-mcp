@@ -9,20 +9,20 @@ description = "PulseLink — keyless open-web & social research source (MCP Serv
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.11, <3.15"
-dependencies = [ "agent-utilities>=1.0.0", "python-dotenv>=1.0.0",]
+dependencies = [ "agent-utilities>=1.27.1,<2.0.0", "python-dotenv>=1.0.0",]
 [[project.authors]]
-name = "Audel Rouhi"
-email = "knucklessg1@gmail.com"
+name = "Project Maintainers"
+email = "maintainers@users.noreply.github.com"
 
 [project.license]
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-utilities[mcp]>=1.0.0",]
-agent = [ "agent-utilities[agent,logfire]>=1.0.0",]
+mcp = [ "agent-utilities[mcp]>=1.27.1,<2.0.0",]
+agent = [ "agent-utilities[agent-runtime,logfire]>=1.27.1,<2.0.0",]
 # Heavy / fragile transport deps stay OPTIONAL + lazy-imported (keyless-first):
 # the keyless web/forum/news/dev sources need only `requests` (via agent-utilities).
-youtube = [ "yt-dlp>=2024.0",]
+youtube = [ "yt-dlp>=2026.6.9",]
 feeds = [ "feedparser>=6.0",]
 audio = [ "faster-whisper>=1.0",]
 sources = [ "pulselink-mcp[youtube,feeds]>=1.0.1",]

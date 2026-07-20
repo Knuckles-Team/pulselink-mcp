@@ -1,0 +1,6 @@
+{
+  "connector": "pulselink-mcp",
+  "current_ontology_source": "pulselink",
+  "migrations": [],
+  "schema_version": "1"
+}
