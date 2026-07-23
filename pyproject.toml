@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pulselink-mcp"
-version = "1.0.1"
+version = "2.0.0"
 description = "PulseLink — keyless open-web & social research source (MCP Server + A2A Server)"
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
@@ -25,8 +25,8 @@ agent = [ "agent-utilities[agent-runtime,logfire]>=1.27.1,<2.0.0",]
 youtube = [ "yt-dlp>=2026.7.4",]
 feeds = [ "feedparser>=6.0.12",]
 audio = [ "faster-whisper>=1.2.1",]
-sources = [ "pulselink-mcp[youtube,feeds]>=1.0.1",]
-all = [ "pulselink-mcp[mcp,agent,logfire,youtube,feeds,audio]>=1.0.1",]
+sources = [ "pulselink-mcp[youtube,feeds]>=2.0.0",]
+all = [ "pulselink-mcp[mcp,agent,logfire,youtube,feeds,audio]>=2.0.0",]
 test = [
     "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytest-cov>=7.1.0",
     "feedparser>=6.0.12",]

@@ -14,7 +14,7 @@ from pulselink_mcp.auth import get_client
 
 from .mcp import register_pulse_tools  # noqa: F401  (auto-discovered as tag "pulse")
 
-__version__ = "1.0.1"
+__version__ = "2.0.0"
 
 logger = get_logger(name="MCP_Server")
 logger.setLevel(logging.INFO)
