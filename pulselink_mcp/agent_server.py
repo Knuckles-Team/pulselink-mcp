@@ -2,6 +2,7 @@
 import logging
 import os
 import sys
+import warnings
 
 __version__ = "2.0.0"
 
@@ -25,6 +26,12 @@ def agent_server():
     initialize_workspace()
     meta = load_identity()
     agent_name = os.getenv("DEFAULT_AGENT_NAME", meta.get("name", "PulseLink MCP"))
+
+    # Noise-only: urllib3's connection-pool logging is unrelated to this agent's
+    # own code and would otherwise spam stderr on every keyless web/social fetch.
+    # Not a DeprecationWarning filter -- upstream-currency edict rule 4 forbids
+    # silencing those; this only quiets an unrelated informational message.
+    warnings.filterwarnings("ignore", message=".*urllib3.*")
 
     print(f"{agent_name} v{__version__}", file=sys.stderr)
     parser = create_agent_parser()
