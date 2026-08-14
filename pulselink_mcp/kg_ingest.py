@@ -11,6 +11,10 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from agent_utilities.knowledge_graph.enrichment.extractors.social import (
+    extract_structured_entities,
+    to_kg_rows,
+)
 from agent_utilities.knowledge_graph.memory.native_ingest import (
     NativeIngestError,
 )
@@ -87,6 +91,7 @@ def _map_documents(
     ]
     relationships: list[dict[str, Any]] = []
     seen_people: set[str] = set()
+    seen_entities: set[str] = set()
 
     for d in documents or []:
         ext = str(d.get("id") or "").strip()
@@ -116,6 +121,22 @@ def _map_documents(
         relationships.append(
             {"source": doc_id, "target": src_id, "relationship": "fromSource"}
         )
+
+        # Free-first deterministic entity extraction (CONCEPT:AU-KG.ingest.deterministic-social-entity-mining):
+        # mine the platform's OWN structured entities.hashtags/user_mentions/urls
+        # (passed through by the social backends' `extra["entities"]`) into
+        # :Hashtag/:Mention/:Tool nodes, before any LLM enrichment runs on this
+        # document. Zero-cost, deterministic, reproducible, auditable.
+        raw_entities = (d.get("extra") or {}).get("entities")
+        if raw_entities:
+            structured = extract_structured_entities({"entities": raw_entities})
+            if not structured.is_empty():
+                extra_nodes, extra_edges = to_kg_rows(structured, document_id=doc_id)
+                for n in extra_nodes:
+                    if n["id"] not in seen_entities:
+                        seen_entities.add(n["id"])
+                        nodes.append(n)
+                relationships.extend(extra_edges)
 
         author = (d.get("author") or "").strip()
         if author:
