@@ -47,6 +47,9 @@ pulselink-mcp = "pulselink_mcp.connectors"
 [project.entry-points."agent_utilities.prompt_providers"]
 pulselink-mcp = "pulselink_mcp.prompts"
 
+[tool.uv.workspace]
+members = ["."]
+
 [tool.setuptools]
 include-package-data = true
 
