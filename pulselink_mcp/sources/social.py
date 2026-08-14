@@ -25,7 +25,10 @@ class XApiBackend(SourceBackend):
         params = {
             "query": query,
             "max_results": str(max(10, min(limit, 100))),
-            "tweet.fields": "created_at,author_id,public_metrics",
+            # "entities" must be requested explicitly (v2 omits it by default)
+            # so the API's own hashtag/mention/url metadata is available for
+            # free, zero-LLM extraction downstream (kg_ingest._map_documents).
+            "tweet.fields": "created_at,author_id,public_metrics,entities",
         }
         if cursor:
             params["next_token"] = cursor
@@ -38,6 +41,7 @@ class XApiBackend(SourceBackend):
                 author=t.get("author_id", ""),
                 created_at=t.get("created_at", ""),
                 metrics=t.get("public_metrics", {}),
+                extra={"entities": t["entities"]} if t.get("entities") else {},
             )
             for t in data.get("data", [])
         ]
@@ -49,7 +53,7 @@ class XApiBackend(SourceBackend):
         tweet_id = url_or_id.rstrip("/").split("/")[-1].split("?")[0]
         data = self.get_json(
             f"{self._API}/tweets/{tweet_id}",
-            params={"tweet.fields": "created_at,author_id,public_metrics"},
+            params={"tweet.fields": "created_at,author_id,public_metrics,entities"},
         )
         t = data.get("data", {})
         return PulseDocument(
@@ -59,6 +63,7 @@ class XApiBackend(SourceBackend):
             author=t.get("author_id", ""),
             created_at=t.get("created_at", ""),
             metrics=t.get("public_metrics", {}),
+            extra={"entities": t["entities"]} if t.get("entities") else {},
         )
 
 
@@ -134,6 +139,14 @@ def _parse_x_graphql(payload: dict) -> PulseResult:
                         "likes": legacy.get("favorite_count", 0),
                         "retweets": legacy.get("retweet_count", 0),
                     },
+                    # legacy already carries the platform's own entities.hashtags/
+                    # entities.user_mentions/entities.urls — pass through for
+                    # free, zero-LLM extraction downstream instead of discarding it.
+                    extra=(
+                        {"entities": legacy["entities"]}
+                        if legacy.get("entities")
+                        else {}
+                    ),
                 )
             )
     return PulseResult(documents=docs)
