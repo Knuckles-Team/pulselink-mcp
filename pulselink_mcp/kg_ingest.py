@@ -113,7 +113,9 @@ def _map_documents(
         if metrics:
             node["engagement"] = json.dumps(metrics, ensure_ascii=False, sort_keys=True)
         nodes.append({k: v for k, v in node.items() if v is not None})
-        relationships.append({"source": doc_id, "target": src_id, "relationship": "fromSource"})
+        relationships.append(
+            {"source": doc_id, "target": src_id, "relationship": "fromSource"}
+        )
 
         author = (d.get("author") or "").strip()
         if author:
