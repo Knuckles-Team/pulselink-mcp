@@ -2023,7 +2023,7 @@ wheels = [
 
 [[package]]
 name = "pulselink-mcp"
-version = "2.0.0"
+version = "2.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "agent-utilities" },
@@ -2077,8 +2077,8 @@ requires-dist = [
     { name = "faster-whisper", marker = "extra == 'audio'", specifier = ">=1.2.1" },
     { name = "feedparser", marker = "extra == 'feeds'", specifier = ">=6.0.12" },
     { name = "feedparser", marker = "extra == 'test'", specifier = ">=6.0.12" },
-    { name = "pulselink-mcp", extras = ["mcp", "agent", "logfire", "youtube", "feeds", "audio"], marker = "extra == 'all'", specifier = ">=2.0.0" },
-    { name = "pulselink-mcp", extras = ["youtube", "feeds"], marker = "extra == 'sources'", specifier = ">=2.0.0" },
+    { name = "pulselink-mcp", extras = ["mcp", "agent", "logfire", "youtube", "feeds", "audio"], marker = "extra == 'all'", specifier = ">=2.1.0" },
+    { name = "pulselink-mcp", extras = ["youtube", "feeds"], marker = "extra == 'sources'", specifier = ">=2.1.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=9.1.1" },
     { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=1.4.0" },
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=7.1.0" },
