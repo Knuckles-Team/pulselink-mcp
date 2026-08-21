@@ -1,8 +1,7 @@
 {
   "api_version": "graphos.io/v1",
   "artifacts": {
-    "a2a.json": "34ccff05de1e919369c7e3e32242ca239d1c0ecf3450d6718857bb8468672f6a",
-    "connector_manifest.yml": "0db924f23e2cc0d86e1f7d9cbb8f0a9d042d3e2e8a60de7860564ee144d95a4b",
+    "connector_manifest.yml": "228705658775691b13017bf285ff02fd2963ee2174ef7c25434f099c58494e30",
     "pulselink_mcp/connectors/mcp_source_presets.json": "a32173afd7eedb615fda7fde039bf27bd3172969184d8bec2ba0198993fad395",
     "pulselink_mcp/connectors/tool_schema_fingerprints.json": "53d49dc0ffbf76db4eaa801e159d4ec72b80fa4e7d64cc7ea4350b514ec795a2",
     "pulselink_mcp/ontology/fixtures/records.json": "a862b9027ab56ecbd7c5a8692eb76ee3a70aeadbc5c66504215ca63ec4243eae",
@@ -19,19 +18,19 @@
     "synthetic_fixture_contract": "passed"
   },
   "compatibility": {
-    "agent_utilities": ">=2.1.0,<3",
+    "agent_utilities": ">=2.4.0,<3",
     "bundle_schema": "2",
-    "epistemic_graph": ">=2.23.0,<3"
+    "epistemic_graph": ">=2.26.0,<3"
   },
   "connector": "pulselink-mcp",
   "kind": "ConnectorSourceAttestation",
   "live_certified": false,
   "mode": "offline-source",
   "schema_version": "2",
-  "signature": "C6weOy8ISCPIf9KvEox8pRSdI9TzKUBqPMfhvyaN4h-mgQNjbjoA1r8UpeyvydUGL2z2VW3V6_fb_XeTkMHDCQ",
-  "signature_algorithm": "ed25519",
-  "signer": "ontology-manifest-generator",
-  "signing_public_key": "QkigdPNpcUU7x7NcSkwCsUXIQpaFncMQbYSoiSgI2SY",
+  "signature": null,
+  "signature_algorithm": "none",
+  "signer": "UNSIGNED-PREVIEW",
+  "signing_public_key": "",
   "status": "source-validated",
-  "validated_at": "2026-07-31T04:00:00Z"
+  "validated_at": "2026-08-21T04:30:39Z"
 }
