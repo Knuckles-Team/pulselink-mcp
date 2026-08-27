@@ -1,7 +1,7 @@
 {
   "api_version": "graphos.io/v1",
   "artifacts": {
-    "connector_manifest.yml": "228705658775691b13017bf285ff02fd2963ee2174ef7c25434f099c58494e30",
+    "connector_manifest.yml": "083e1b3945868ccfeb0f714988dafb221bbca2c1a952729059e8186cf6a9d5ab",
     "pulselink_mcp/connectors/mcp_source_presets.json": "a32173afd7eedb615fda7fde039bf27bd3172969184d8bec2ba0198993fad395",
     "pulselink_mcp/connectors/tool_schema_fingerprints.json": "53d49dc0ffbf76db4eaa801e159d4ec72b80fa4e7d64cc7ea4350b514ec795a2",
     "pulselink_mcp/ontology/fixtures/records.json": "a862b9027ab56ecbd7c5a8692eb76ee3a70aeadbc5c66504215ca63ec4243eae",
@@ -18,9 +18,9 @@
     "synthetic_fixture_contract": "passed"
   },
   "compatibility": {
-    "agent_utilities": ">=2.4.0,<3",
+    "agent_utilities": ">=2.5.0,<3",
     "bundle_schema": "2",
-    "epistemic_graph": ">=2.26.0,<3"
+    "epistemic_graph": ">=2.27.0,<3"
   },
   "connector": "pulselink-mcp",
   "kind": "ConnectorSourceAttestation",
@@ -32,5 +32,5 @@
   "signer": "UNSIGNED-PREVIEW",
   "signing_public_key": "",
   "status": "source-validated",
-  "validated_at": "2026-08-21T04:30:39Z"
+  "validated_at": "2026-08-26T13:42:55Z"
 }
