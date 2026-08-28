@@ -158,11 +158,12 @@ This table is auto-generated from the live server — do not edit by hand.
 
 <!-- MCP-TOOLS-TABLE:START -->
 
-#### Condensed action-routed tools (default — `MCP_TOOL_MODE=condensed`)
+#### Condensed action-routed tools (`MCP_TOOL_MODE=condensed`)
 
 | MCP Tool | Toggle Env Var | Description |
 |----------|----------------|-------------|
 | `pulse_fetch` | `PULSETOOL` | Fetch one item (full text/body/transcript). CONCEPT:PK-OS.governance.search-fetch-list-transcribe |
+| `pulse_ingest` | `PULSETOOL` | Search/list a source and natively ingest the results into epistemic-graph. |
 | `pulse_list` | `PULSETOOL` | List items from a source channel/feed. CONCEPT:PK-OS.governance.search-fetch-list-transcribe |
 | `pulse_search` | `PULSETOOL` | Search a source and return normalized documents. CONCEPT:PK-OS.governance.search-fetch-list-transcribe |
 | `pulse_status` | `PULSETOOL` | Per-source backend + credential health (the doctor). CONCEPT:PK-OS.governance.search-fetch-list-transcribe |
@@ -184,7 +185,7 @@ This table is auto-generated from the live server — do not edit by hand.
 
 </details>
 
-_5 action-routed tool(s) (default) · 6 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (`condensed` default · `verbose` 1:1 · `both`). Auto-generated — do not edit._
+_6 action-routed tool(s) · 6 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (**`intent` default** — the six verb-tools, granular set loaded on demand · `condensed` action-routed · `verbose` 1:1 · `both`). Auto-generated — do not edit._
 <!-- MCP-TOOLS-TABLE:END -->
 
 ## Environment Variables

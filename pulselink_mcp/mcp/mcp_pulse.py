@@ -52,7 +52,7 @@ def register_pulse_tools(mcp: FastMCP) -> None:
     ) -> dict:
         """Search a source and return normalized documents. CONCEPT:PK-OS.governance.search-fetch-list-transcribe"""
         if ctx:
-            ctx.info("Executing configured pulse search")
+            await ctx.info("Executing configured pulse search")
         try:
             result = await asyncio.to_thread(
                 get_client().search, source, query, cursor, limit
@@ -70,7 +70,7 @@ def register_pulse_tools(mcp: FastMCP) -> None:
     ) -> dict:
         """Fetch one item (full text/body/transcript). CONCEPT:PK-OS.governance.search-fetch-list-transcribe"""
         if ctx:
-            ctx.info(f"pulse_fetch source={source!r} target={target!r}")
+            await ctx.info(f"pulse_fetch source={source!r} target={target!r}")
         try:
             result = await asyncio.to_thread(get_client().fetch, source, target)
             await asyncio.to_thread(_maybe_ingest, source, result)
@@ -91,7 +91,7 @@ def register_pulse_tools(mcp: FastMCP) -> None:
     ) -> dict:
         """List items from a source channel/feed. CONCEPT:PK-OS.governance.search-fetch-list-transcribe"""
         if ctx:
-            ctx.info(f"pulse_list source={source!r} channel={channel!r}")
+            await ctx.info(f"pulse_list source={source!r} channel={channel!r}")
         try:
             result = await asyncio.to_thread(
                 get_client().list_items, source, channel, cursor, limit
@@ -112,7 +112,7 @@ def register_pulse_tools(mcp: FastMCP) -> None:
     ) -> dict:
         """Transcribe video/audio to text. CONCEPT:PK-OS.governance.audio-video-sources-transcript"""
         if ctx:
-            ctx.info(f"pulse_transcribe source={source!r} target={target!r}")
+            await ctx.info(f"pulse_transcribe source={source!r} target={target!r}")
         try:
             return await asyncio.to_thread(get_client().transcribe, target, source)
         except Exception:  # noqa: BLE001
@@ -122,7 +122,7 @@ def register_pulse_tools(mcp: FastMCP) -> None:
     async def pulse_status(ctx: Context | None = None) -> dict:
         """Per-source backend + credential health (the doctor). CONCEPT:PK-OS.governance.search-fetch-list-transcribe"""
         if ctx:
-            ctx.info("pulse_status")
+            await ctx.info("pulse_status")
         return await asyncio.to_thread(get_client().status)
 
     @mcp.tool(tags={"pulse", "kg"})
@@ -146,7 +146,7 @@ def register_pulse_tools(mcp: FastMCP) -> None:
         caller. CONCEPT:AU-KG.ingest.enterprise-source-extractor
         """
         if ctx:
-            ctx.info(
+            await ctx.info(
                 f"pulse_ingest source={source!r} channel={channel!r} query={query!r}"
             )
         try:
