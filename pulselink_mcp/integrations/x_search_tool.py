@@ -19,7 +19,7 @@ import json
 import logging
 import re
 from datetime import UTC, date, datetime
-from typing import Any
+from typing import Any, NamedTuple
 
 import httpx
 from agent_utilities.core.config import setting
@@ -97,6 +97,17 @@ def _validate_date_range(from_date: str, to_date: str) -> None:
             )
 
 
+def _message_text_parts(item: dict[str, Any]) -> list[str]:
+    """Extract text/output_text content parts from one ``message``-type output item."""
+    parts: list[str] = []
+    for content in item.get("content", []) or []:
+        if content.get("type") in {"output_text", "text"}:
+            text = str(content.get("text") or "").strip()
+            if text:
+                parts.append(text)
+    return parts
+
+
 def _extract_response_text(payload: dict[str, Any]) -> str:
     """Extract full synthesized text response from xAI Responses payload."""
     output_text = str(payload.get("output_text") or "").strip()
@@ -107,12 +118,7 @@ def _extract_response_text(payload: dict[str, Any]) -> str:
     for item in payload.get("output", []) or []:
         if item.get("type") != "message":
             continue
-        for content in item.get("content", []) or []:
-            ctype = content.get("type")
-            if ctype in {"output_text", "text"}:
-                text = str(content.get("text") or "").strip()
-                if text:
-                    parts.append(text)
+        parts.extend(_message_text_parts(item))
     return "\n\n".join(parts).strip()
 
 
@@ -135,6 +141,198 @@ def _extract_inline_citations(payload: dict[str, Any]) -> list[dict[str, Any]]:
                     }
                 )
     return citations
+
+
+class _XaiSearchConfig(NamedTuple):
+    base_url: str
+    model: str
+    timeout: int
+    max_retries: int
+
+
+def _resolve_xai_api_key() -> str | None:
+    """Resolve xAI credentials, triggering the auto-login flow if needed."""
+    auth_manager = XaiAuthManager()
+    return auth_manager.resolve_credentials(auto_login=True)  # type: ignore[call-arg]
+
+
+def _resolve_xai_search_config(ctx: RunContext[AgentDeps]) -> _XaiSearchConfig:
+    """Resolve base_url/model/timeout/retries from agent config, falling back to env/defaults."""
+    config = getattr(ctx.deps, "config", {}) if ctx and ctx.deps else {}
+    if not isinstance(config, dict):
+        config = {}
+    xai_config = config.get("xai", {}) or {}
+
+    base_url = (
+        str(xai_config.get("base_url") or setting("XAI_BASE_URL", DEFAULT_XAI_BASE_URL))
+        .strip()
+        .rstrip("/")
+    )
+    model = str(
+        xai_config.get("model") or setting("XAI_SEARCH_MODEL", DEFAULT_X_SEARCH_MODEL)
+    ).strip()
+    timeout_val = xai_config.get("timeout_seconds") or setting(
+        "XAI_SEARCH_TIMEOUT_SECONDS", DEFAULT_X_SEARCH_TIMEOUT_SECONDS
+    )
+    timeout = max(30, int(str(timeout_val)))
+
+    retries_val = xai_config.get("retries") or setting(
+        "XAI_SEARCH_RETRIES", DEFAULT_X_SEARCH_RETRIES
+    )
+    max_retries = max(0, int(str(retries_val)))
+
+    return _XaiSearchConfig(
+        base_url=base_url, model=model, timeout=timeout, max_retries=max_retries
+    )
+
+
+def _resolve_x_search_filters(
+    allowed_x_handles: list[str] | None,
+    excluded_x_handles: list[str] | None,
+    from_date: str | None,
+    to_date: str | None,
+) -> tuple[list[str], list[str], str | None]:
+    """Normalize + validate the handle/date filters.
+
+    Returns ``(allowed, excluded, error)``; ``error`` is None on success, else
+    the message to surface to the caller (mutual-exclusivity violation, or the
+    generic message for an invalid handle list / date range).
+    """
+    try:
+        allowed = _normalize_handles(allowed_x_handles, "allowed_x_handles")
+        excluded = _normalize_handles(excluded_x_handles, "excluded_x_handles")
+        if allowed and excluded:
+            return (
+                [],
+                [],
+                "allowed_x_handles and excluded_x_handles cannot be used together",
+            )
+        _validate_date_range(from_date or "", to_date or "")
+    except ValueError:
+        return [], [], "Operation failed"
+    return allowed, excluded, None
+
+
+def _build_x_search_tool_def(
+    allowed: list[str],
+    excluded: list[str],
+    from_date: str | None,
+    to_date: str | None,
+) -> dict[str, Any]:
+    """Build the xAI ``x_search`` tool constraint from the resolved filters."""
+    tool_def: dict[str, Any] = {"type": "x_search"}
+    if allowed:
+        tool_def["allowed_x_handles"] = allowed
+    if excluded:
+        tool_def["excluded_x_handles"] = excluded
+    if from_date and from_date.strip():
+        tool_def["from_date"] = from_date.strip()
+    if to_date and to_date.strip():
+        tool_def["to_date"] = to_date.strip()
+    return tool_def
+
+
+def _is_retryable_x_search_error(exc: BaseException) -> bool:
+    """CONCEPT:AU-ORCH.execution.retry-predicate-raised-treating: bounded delays retry
+    connection errors and 5xx responses only."""
+    if isinstance(exc, httpx.HTTPStatusError):
+        return exc.response.status_code >= 500
+    return isinstance(exc, httpx.RequestError | httpx.TimeoutException)
+
+
+async def _execute_x_search_request(
+    base_url: str,
+    headers: dict[str, str],
+    payload: dict[str, Any],
+    timeout: int,
+    max_retries: int,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """POST to xAI's ``/responses`` with resilience retry. Returns (data, error_message)."""
+
+    def _post_once() -> dict[str, Any]:
+        profile = resolve_configured_tls_profile("model")
+        try:
+            with create_http_client(
+                timeout=float(timeout),
+                **profile.httpx_kwargs(),
+            ) as client:
+                resp = client.post(
+                    f"{base_url}/responses",
+                    headers=headers,
+                    json=payload,
+                )
+                resp.raise_for_status()
+                return resp.json()
+        finally:
+            profile.cleanup()
+
+    policy = ResiliencePolicy(
+        max_attempts=max_retries + 1,
+        backoff_base_s=1.5,
+        backoff_strategy="linear",
+        max_backoff_s=5.0,
+        jitter=False,
+        retry_on=_is_retryable_x_search_error,
+        name="x_search",
+    )
+
+    try:
+        return await run_with_resilience(_post_once, policy), None
+    except httpx.HTTPStatusError as exc:
+        return None, f"HTTP {exc.response.status_code}"
+    except (httpx.RequestError, httpx.TimeoutException) as exc:
+        return None, f"Connection error: {type(exc).__name__}"
+
+
+def _active_x_search_filters(
+    allowed: list[str],
+    excluded: list[str],
+    from_date: str | None,
+    to_date: str | None,
+) -> list[str]:
+    """List which filter kinds were actually supplied, for the degraded-result check."""
+    active_filters = []
+    if allowed:
+        active_filters.append("allowed_x_handles")
+    if excluded:
+        active_filters.append("excluded_x_handles")
+    if from_date and from_date.strip():
+        active_filters.append("from_date")
+    if to_date and to_date.strip():
+        active_filters.append("to_date")
+    return active_filters
+
+
+def _x_search_success_payload(
+    model: str,
+    query: str,
+    response_data: dict[str, Any],
+    active_filters: list[str],
+) -> dict[str, Any]:
+    """Build the success response body: answer, citations, and degraded-result flag."""
+    answer = _extract_response_text(response_data)
+    citations = list(response_data.get("citations") or [])
+    inline_citations = _extract_inline_citations(response_data)
+
+    degraded = bool(active_filters) and not citations and not inline_citations
+    degraded_reason = (
+        f"No citations returned despite active filters: {', '.join(active_filters)}"
+        if degraded
+        else None
+    )
+
+    return {
+        "success": True,
+        "provider": "xai",
+        "tool": "x_search",
+        "model": model,
+        "query": query.strip(),
+        "answer": answer,
+        "citations": citations,
+        "inline_citations": inline_citations,
+        "degraded": degraded,
+        "degraded_reason": degraded_reason,
+    }
 
 
 @trace(name="x_search", trace_type="TOOL")
@@ -167,8 +365,7 @@ async def x_search(
         return json.dumps({"success": False, "error": "query is required for x_search"})
 
     # 1. Resolve Credentials with Auto-Login enabled
-    auth_manager = XaiAuthManager()
-    api_key = auth_manager.resolve_credentials(auto_login=True)  # type: ignore[call-arg]
+    api_key = _resolve_xai_api_key()
     if not api_key:
         return json.dumps(
             {
@@ -181,58 +378,20 @@ async def x_search(
         )
 
     # 2. Parse overrides from config or env
-    config = getattr(ctx.deps, "config", {}) if ctx and ctx.deps else {}
-    if not isinstance(config, dict):
-        config = {}
-    xai_config = config.get("xai", {}) or {}
-
-    base_url = (
-        str(xai_config.get("base_url") or setting("XAI_BASE_URL", DEFAULT_XAI_BASE_URL))
-        .strip()
-        .rstrip("/")
-    )
-    model = str(
-        xai_config.get("model") or setting("XAI_SEARCH_MODEL", DEFAULT_X_SEARCH_MODEL)
-    ).strip()
-    timeout_val = xai_config.get("timeout_seconds") or setting(
-        "XAI_SEARCH_TIMEOUT_SECONDS", DEFAULT_X_SEARCH_TIMEOUT_SECONDS
-    )
-    timeout = max(30, int(str(timeout_val)))
-
-    retries_val = xai_config.get("retries") or setting(
-        "XAI_SEARCH_RETRIES", DEFAULT_X_SEARCH_RETRIES
-    )
-    max_retries = max(0, int(str(retries_val)))
+    search_config = _resolve_xai_search_config(ctx)
 
     # 3. Normalize & Validate Filters
-    try:
-        allowed = _normalize_handles(allowed_x_handles, "allowed_x_handles")
-        excluded = _normalize_handles(excluded_x_handles, "excluded_x_handles")
-        if allowed and excluded:
-            return json.dumps(
-                {
-                    "success": False,
-                    "error": "allowed_x_handles and excluded_x_handles cannot be used together",
-                }
-            )
-
-        _validate_date_range(from_date or "", to_date or "")
-    except ValueError:
-        return json.dumps({"success": False, "error": "Operation failed"})
+    allowed, excluded, filter_error = _resolve_x_search_filters(
+        allowed_x_handles, excluded_x_handles, from_date, to_date
+    )
+    if filter_error:
+        return json.dumps({"success": False, "error": filter_error})
 
     # 4. Construct Tool Constraint
-    tool_def: dict[str, Any] = {"type": "x_search"}
-    if allowed:
-        tool_def["allowed_x_handles"] = allowed
-    if excluded:
-        tool_def["excluded_x_handles"] = excluded
-    if from_date and from_date.strip():
-        tool_def["from_date"] = from_date.strip()
-    if to_date and to_date.strip():
-        tool_def["to_date"] = to_date.strip()
+    tool_def = _build_x_search_tool_def(allowed, excluded, from_date, to_date)
 
     payload = {
-        "model": model,
+        "model": search_config.model,
         "input": [
             {
                 "role": "user",
@@ -249,49 +408,14 @@ async def x_search(
         "User-Agent": "pulselink-mcp/x_search_tool",
     }
 
-    # 5. Execute HTTP Request with Retries — declarative ResiliencePolicy
-    # (CONCEPT:AU-ORCH.execution.retry-predicate-raised-treating): bounded
-    # delays retry connection errors and 5xx responses only.
-    def _retryable(exc: BaseException) -> bool:
-        if isinstance(exc, httpx.HTTPStatusError):
-            return exc.response.status_code >= 500
-        return isinstance(exc, httpx.RequestError | httpx.TimeoutException)
-
-    def _post_once() -> dict[str, Any]:
-        profile = resolve_configured_tls_profile("model")
-        try:
-            with create_http_client(
-                timeout=float(timeout),
-                **profile.httpx_kwargs(),
-            ) as client:
-                resp = client.post(
-                    f"{base_url}/responses",
-                    headers=headers,
-                    json=payload,
-                )
-                resp.raise_for_status()
-                return resp.json()
-        finally:
-            profile.cleanup()
-
-    policy = ResiliencePolicy(
-        max_attempts=max_retries + 1,
-        backoff_base_s=1.5,
-        backoff_strategy="linear",
-        max_backoff_s=5.0,
-        jitter=False,
-        retry_on=_retryable,
-        name="x_search",
+    # 5. Execute HTTP Request with Retries
+    response_data, last_error = await _execute_x_search_request(
+        search_config.base_url,
+        headers,
+        payload,
+        search_config.timeout,
+        search_config.max_retries,
     )
-
-    response_data: dict[str, Any] | None = None
-    last_error: str | None = None
-    try:
-        response_data = await run_with_resilience(_post_once, policy)
-    except httpx.HTTPStatusError as exc:
-        last_error = f"HTTP {exc.response.status_code}"
-    except (httpx.RequestError, httpx.TimeoutException) as exc:
-        last_error = f"Connection error: {type(exc).__name__}"
 
     if not response_data:
         return json.dumps(
@@ -302,42 +426,86 @@ async def x_search(
         )
 
     # 6. Extract Answers and Citations
-    answer = _extract_response_text(response_data)
-    citations = list(response_data.get("citations") or [])
-    inline_citations = _extract_inline_citations(response_data)
-
-    active_filters = []
-    if allowed:
-        active_filters.append("allowed_x_handles")
-    if excluded:
-        active_filters.append("excluded_x_handles")
-    if from_date and from_date.strip():
-        active_filters.append("from_date")
-    if to_date and to_date.strip():
-        active_filters.append("to_date")
-
-    degraded = bool(active_filters) and not citations and not inline_citations
-    degraded_reason = (
-        f"No citations returned despite active filters: {', '.join(active_filters)}"
-        if degraded
-        else None
+    active_filters = _active_x_search_filters(allowed, excluded, from_date, to_date)
+    result = _x_search_success_payload(
+        search_config.model, query, response_data, active_filters
     )
+    return json.dumps(result, ensure_ascii=False)
 
-    return json.dumps(
-        {
-            "success": True,
-            "provider": "xai",
-            "tool": "x_search",
-            "model": model,
-            "query": query.strip(),
-            "answer": answer,
-            "citations": citations,
-            "inline_citations": inline_citations,
-            "degraded": degraded,
-            "degraded_reason": degraded_reason,
-        },
-        ensure_ascii=False,
+
+class _XPostRef(NamedTuple):
+    cleaned_url: str
+    post_id: str
+    username: str | None
+
+
+def _parse_x_post_url(url: str) -> _XPostRef | None:
+    """Parse a post id + optional username out of an X/Twitter status URL.
+
+    Supports ``https://x.com/username/status/12345``,
+    ``https://twitter.com/username/status/12345``, and
+    ``https://x.com/i/status/12345``. Returns None if the URL doesn't look
+    like a status URL at all.
+    """
+    cleaned_url = url.strip()
+    status_match = re.search(r"/status/(\d+)", cleaned_url)
+    if not status_match:
+        return None
+    post_id = status_match.group(1)
+
+    handle_match = re.search(r"(?:x|twitter)\.com/([A-Za-z0-9_]+)/status/", cleaned_url)
+    username = handle_match.group(1) if handle_match else None
+    if username == "i":
+        username = None
+
+    return _XPostRef(cleaned_url=cleaned_url, post_id=post_id, username=username)
+
+
+def _build_x_post_lookup_query(ref: _XPostRef) -> str:
+    """Build the query that guides Grok's live index lookup for one specific post."""
+    query_parts = [
+        f"Retrieve the exact text, author, timestamp, and engagement metrics of the X post status ID {ref.post_id}"
+    ]
+    if ref.username:
+        query_parts.append(f"by user @{ref.username}")
+    query_parts.append(f"canonical URL {ref.cleaned_url}.")
+    query_parts.append(
+        "CRITICAL: You MUST return the actual text content of the post, the author's handle, the date/time, and any metrics you can find. Do NOT return a generic summary."
     )
+    return " ".join(query_parts)
+
+
+def _annotate_browse_result(res: dict[str, Any], ref: _XPostRef) -> None:
+    """Add direct metadata fields to the search result for first-class usability."""
+    res["tool"] = "browse_x_post"
+    res["post_id"] = ref.post_id
+    if ref.username:
+        res["username"] = ref.username
+    res["url"] = ref.cleaned_url
+
+
+async def _auto_ingest_x_post(
+    ctx: RunContext[AgentDeps], res: dict[str, Any], post_id: str
+) -> None:
+    """Best-effort KG ingestion of a browsed post; never raises into the caller."""
+    try:
+        from agent_utilities.knowledge_graph.kb.x_ingestion import XIngestionBridge
+
+        # Try to get graph from deps or create a minimal one
+        graph = getattr(getattr(ctx, "deps", None), "graph", None)
+        if graph is None:
+            logger.debug("auto_ingest=True but no graph in ctx.deps; skipping")
+            return
+        bridge = XIngestionBridge(graph=graph)
+        ingest_result = await bridge.ingest_browse_result(res)
+        res["ingestion"] = ingest_result
+        logger.info(
+            "Auto-ingested post %s: action=%s",
+            post_id,
+            ingest_result.get("action"),
+        )
+    except Exception as e:
+        logger.warning("Operation failed: error_type=%s", type(e).__name__)
 
 
 @trace(name="browse_x_post", trace_type="TOOL")
@@ -369,14 +537,9 @@ async def browse_x_post(
             {"success": False, "error": "url is required for browse_x_post"}
         )
 
-    # 1. Validate & Parse X / Twitter URL
-    # Support:
-    #   * https://x.com/username/status/12345
-    #   * https://twitter.com/username/status/12345
-    #   * https://x.com/i/status/12345
-    cleaned_url = url.strip()
-    status_match = re.search(r"/status/(\d+)", cleaned_url)
-    if not status_match:
+    # 1 & 2. Validate & Parse X / Twitter URL, extracting username/handle if present
+    ref = _parse_x_post_url(url)
+    if ref is None:
         return json.dumps(
             {
                 "success": False,
@@ -384,34 +547,15 @@ async def browse_x_post(
             }
         )
 
-    post_id = status_match.group(1)
-
-    # 2. Extract Username/Handle if present
-    handle_match = re.search(r"(?:x|twitter)\.com/([A-Za-z0-9_]+)/status/", cleaned_url)
-    username = handle_match.group(1) if handle_match else None
-    if username == "i":
-        username = None
-
     # 3. Construct specific query optimized to retrieve the target post from the X index
-    # We query the exact status link, the post ID, and username to guide Grok's live index lookup.
-    query_parts = [
-        f"Retrieve the exact text, author, timestamp, and engagement metrics of the X post status ID {post_id}"
-    ]
-    if username:
-        query_parts.append(f"by user @{username}")
-    query_parts.append(f"canonical URL {cleaned_url}.")
-    query_parts.append(
-        "CRITICAL: You MUST return the actual text content of the post, the author's handle, the date/time, and any metrics you can find. Do NOT return a generic summary."
-    )
-
-    query = " ".join(query_parts)
+    query = _build_x_post_lookup_query(ref)
 
     # 4. Delegate to x_search to perform the actual lookup and synthesis
     logger.info("Executing configured social-post lookup")
     search_result_str = await x_search(
         ctx=ctx,
         query=query,
-        allowed_x_handles=[username] if username else None,
+        allowed_x_handles=[ref.username] if ref.username else None,
     )
 
     try:
@@ -419,35 +563,11 @@ async def browse_x_post(
         if not res.get("success"):
             return search_result_str
 
-        # Add direct metadata fields to the output response for first-class usability
-        res["tool"] = "browse_x_post"
-        res["post_id"] = post_id
-        if username:
-            res["username"] = username
-        res["url"] = cleaned_url
+        _annotate_browse_result(res, ref)
 
         # 5. Auto-ingest into KG if requested
         if auto_ingest:
-            try:
-                from agent_utilities.knowledge_graph.kb.x_ingestion import (
-                    XIngestionBridge,
-                )
-
-                # Try to get graph from deps or create a minimal one
-                graph = getattr(getattr(ctx, "deps", None), "graph", None)
-                if graph is not None:
-                    bridge = XIngestionBridge(graph=graph)
-                    ingest_result = await bridge.ingest_browse_result(res)
-                    res["ingestion"] = ingest_result
-                    logger.info(
-                        "Auto-ingested post %s: action=%s",
-                        post_id,
-                        ingest_result.get("action"),
-                    )
-                else:
-                    logger.debug("auto_ingest=True but no graph in ctx.deps; skipping")
-            except Exception as e:
-                logger.warning("Operation failed: error_type=%s", type(e).__name__)
+            await _auto_ingest_x_post(ctx, res, ref.post_id)
 
         return json.dumps(res, ensure_ascii=False)
 
