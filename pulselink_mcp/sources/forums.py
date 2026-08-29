@@ -21,22 +21,7 @@ class HackerNewsBackend(SourceBackend):
             self._SEARCH,
             params={"query": query, "page": str(page), "hitsPerPage": str(limit)},
         )
-        docs = [
-            PulseDocument(
-                id=str(h.get("objectID", "")),
-                url=h.get("url")
-                or f"https://news.ycombinator.com/item?id={h.get('objectID')}",
-                title=h.get("title") or h.get("story_title") or "",
-                text=h.get("comment_text") or h.get("story_text") or "",
-                author=h.get("author", ""),
-                created_at=h.get("created_at", ""),
-                metrics={
-                    "points": h.get("points") or 0,
-                    "comments": h.get("num_comments") or 0,
-                },
-            )
-            for h in data.get("hits", [])
-        ]
+        docs = [_hn_hit_document(h) for h in data.get("hits", [])]
         nb_pages = data.get("nbPages", 0)
         next_cursor = str(page + 1) if page + 1 < nb_pages else None
         return PulseResult(documents=docs, next_cursor=next_cursor)
@@ -53,6 +38,22 @@ class HackerNewsBackend(SourceBackend):
             created_at=data.get("created_at", ""),
             metrics={"points": data.get("points") or 0},
         )
+
+
+def _hn_hit_document(h: dict) -> PulseDocument:
+    """Map one Algolia HN search hit to a PulseDocument."""
+    return PulseDocument(
+        id=str(h.get("objectID", "")),
+        url=h.get("url") or f"https://news.ycombinator.com/item?id={h.get('objectID')}",
+        title=h.get("title") or h.get("story_title") or "",
+        text=h.get("comment_text") or h.get("story_text") or "",
+        author=h.get("author", ""),
+        created_at=h.get("created_at", ""),
+        metrics={
+            "points": h.get("points") or 0,
+            "comments": h.get("num_comments") or 0,
+        },
+    )
 
 
 def _flatten_hn_children(node: dict, depth: int = 0) -> str:
