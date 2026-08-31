@@ -1,2 +1,4 @@
-agent-utilities>=2.0.0,<3.0.0
-python-dotenv>=1.0.0
+# The reusable release workflow installs this file only for build prerequisites.
+# The runtime dependency remains declared in pyproject.toml; agent-utilities 2.x
+# is published in an earlier release phase and must not block wheel construction.
+python-dotenv>=1.2.2
