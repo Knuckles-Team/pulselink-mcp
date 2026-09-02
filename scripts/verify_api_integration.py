@@ -149,25 +149,37 @@ def parse_mcp_server(filepath, api_methods):
 
 
 def verify_agent(agent_dir):
-    # Find api_client.py and mcp_server.py
-    api_clients = glob.glob(
-        os.path.join(agent_dir, "**", "api_client.py"), recursive=True
+    # Fleet clients use both api_client.py and purpose-qualified api_client_*.py.
+    api_clients = sorted(
+        set(
+            glob.glob(os.path.join(agent_dir, "**", "api_client.py"), recursive=True)
+            + glob.glob(
+                os.path.join(agent_dir, "**", "api_client_*.py"), recursive=True
+            )
+        )
     )
     mcp_servers = glob.glob(
         os.path.join(agent_dir, "**", "mcp_server.py"), recursive=True
+    )
+    mcp_tool_modules = glob.glob(
+        os.path.join(agent_dir, "**", "mcp", "*.py"), recursive=True
     )
 
     if not api_clients or not mcp_servers:
         return None
 
-    api_client_path = api_clients[0]
-    mcp_server_path = mcp_servers[0]
-
-    api_methods = parse_api_client(api_client_path)
+    api_methods = {}
+    for api_client_path in api_clients:
+        api_methods.update(parse_api_client(api_client_path))
     if not api_methods:
-        return None
+        raise RuntimeError("API client inventory contains no public client methods")
 
-    tool_mappings, mapped_methods = parse_mcp_server(mcp_server_path, api_methods)
+    tool_mappings = {}
+    mapped_methods = set()
+    for mcp_path in sorted(set(mcp_servers + mcp_tool_modules)):
+        module_mappings, module_methods = parse_mcp_server(mcp_path, api_methods)
+        tool_mappings.update(module_mappings)
+        mapped_methods.update(module_methods)
 
     total_methods = len(api_methods)
     covered_methods = len(mapped_methods)
@@ -177,8 +189,9 @@ def verify_agent(agent_dir):
 
     return {
         "agent_name": os.path.basename(agent_dir),
-        "api_client": api_client_path,
-        "mcp_server": mcp_server_path,
+        "api_client": api_clients,
+        "mcp_server": sorted(set(mcp_servers + mcp_tool_modules)),
+        "api_methods": sorted(api_methods),
         "total_methods": total_methods,
         "covered_methods": covered_methods,
         "coverage": coverage,
@@ -205,6 +218,24 @@ def _run_local_mode(cwd: str) -> None:
             "Skipping integration parity verification: No mcp_server.py/api_client.py found in current directory."
         )
         sys.exit(0)
+
+    pulselink_client = os.path.join(
+        cwd,
+        "pulselink_mcp",
+        "api",
+        "api_client_pulse.py",
+    )
+    pulselink_package = os.path.join(cwd, "pulselink_mcp")
+    if os.path.isdir(pulselink_package) and not os.path.exists(pulselink_client):
+        raise RuntimeError("PulseLink API inventory module is missing")
+    if os.path.exists(pulselink_client):
+        pulse_methods = parse_api_client(pulselink_client)
+        expected = {"fetch", "list_items", "search", "sources", "status", "transcribe"}
+        missing = expected - set(pulse_methods)
+        if missing:
+            raise RuntimeError(
+                "PulseLink API inventory is incomplete: " + ", ".join(sorted(missing))
+            )
 
     agent_name = res["agent_name"]
     coverage = res["coverage"]

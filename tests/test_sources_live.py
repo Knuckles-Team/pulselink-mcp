@@ -18,6 +18,9 @@ pytestmark = pytest.mark.live
 
 
 class KeylessCredentialProvider:
+    def require_runtime_authority(self) -> None:
+        return None
+
     def available(self, source: str) -> bool:
         return False
 

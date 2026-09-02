@@ -15,16 +15,50 @@ class CredentialAuthorityUnavailable(RuntimeError):
     """Raised when source composition omitted credential authority."""
 
 
-class CredentialProvider(Protocol):
-    """Minimal injected credential authority consumed by source ladders."""
+class SourceCredentialProvider(Protocol):
+    """Typed source-credential provider wrapped by the runtime authority."""
 
     def available(self, source: str) -> bool: ...
 
     def get(self, source: str) -> Any: ...
 
 
-class UnavailableCredentialProvider:
+class CredentialAuthority(SourceCredentialProvider, Protocol):
+    """Single capability governing readiness, eligibility, and materialization."""
+
+    def require_runtime_authority(self) -> None:
+        raise CredentialAuthorityUnavailable(
+            "Credential authority protocol has no runtime implementation"
+        )
+
+
+class RuntimeCredentialAuthority:
+    """Runtime capability over one explicitly composed credential provider."""
+
+    def __init__(self, provider: SourceCredentialProvider) -> None:
+        self._provider = provider
+
+    def require_runtime_authority(self) -> None:
+        """Confirm this object was composed for executable runtime use."""
+        if self._provider is None:
+            raise CredentialAuthorityUnavailable(
+                "PulseLink runtime credential authority is unavailable"
+            )
+
+    def available(self, source: str) -> bool:
+        return self._provider.available(source)
+
+    def get(self, source: str) -> Any:
+        return self._provider.get(source)
+
+
+class UnavailableCredentialAuthority:
     """Fail-closed authority used only to describe the MCP schema."""
+
+    def require_runtime_authority(self) -> None:
+        raise CredentialAuthorityUnavailable(
+            "PulseLink runtime credential authority is unavailable"
+        )
 
     def available(self, source: str) -> bool:
         raise CredentialAuthorityUnavailable(

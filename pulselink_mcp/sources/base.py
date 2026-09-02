@@ -27,8 +27,8 @@ from typing import Any
 from .contracts import (
     BackendHealth,
     CapabilityUnsupported,
+    CredentialAuthority,
     CredentialAuthorityUnavailable,
-    CredentialProvider,
     PulseDocument,
     PulseResult,
 )
@@ -50,24 +50,25 @@ class SourceBackend(AuthenticatedHttpTransport):
     #: Provider source key required for eligibility, or ``None`` for keyless.
     requires_credential: str | None = None
 
-    def __init__(self, credential_provider: CredentialProvider) -> None:
-        if credential_provider is None:
+    def __init__(self, credential_authority: CredentialAuthority) -> None:
+        if credential_authority is None:
             raise CredentialAuthorityUnavailable(
                 "source backend requires injected credential authority"
             )
-        super().__init__(credential_provider, self.requires_credential)
+        super().__init__(credential_authority, self.requires_credential)
 
     # -- eligibility / health ------------------------------------------------
-    def is_eligible(self, provider: Any) -> bool:
+    def is_eligible(self) -> bool:
         """Keyless backends are always eligible; auth backends need a credential."""
         if self.requires_credential is None:
             return True
-        return provider.available(self.requires_credential)
+        return self._credential_authority.available(self.requires_credential)
 
-    def health(self, provider: Any) -> BackendHealth:
+    def health(self) -> BackendHealth:
         """Cheap reachability/credential probe (overridable)."""
-        if self.requires_credential is not None and not provider.available(
-            self.requires_credential
+        if (
+            self.requires_credential is not None
+            and not self._credential_authority.available(self.requires_credential)
         ):
             return BackendHealth(
                 backend=self.name,
@@ -98,22 +99,22 @@ class SourceLadder:
         self,
         source: str,
         backends: list[SourceBackend],
-        credential_provider: CredentialProvider,
     ) -> None:
-        if credential_provider is None:
+        if not backends:
             raise CredentialAuthorityUnavailable(
-                "source ladder requires injected credential authority"
+                "source ladder requires an authority-bound backend"
+            )
+        authority = backends[0]._credential_authority
+        if any(backend._credential_authority is not authority for backend in backends):
+            raise CredentialAuthorityUnavailable(
+                "source ladder backends must share one credential authority"
             )
         self.source = source
         self.backends = backends
-        self._credential_provider = credential_provider
+        self._credential_authority = authority
 
     def _eligible(self) -> list[SourceBackend]:
-        return [
-            backend
-            for backend in self.backends
-            if backend.is_eligible(self._credential_provider)
-        ]
+        return [backend for backend in self.backends if backend.is_eligible()]
 
     def _run(self, capability: str, *args: Any) -> PulseResult | PulseDocument:
         eligible = self._eligible()
@@ -157,7 +158,7 @@ class SourceLadder:
         return self._run("transcribe", url_or_id)  # type: ignore[return-value]
 
     def health(self) -> list[BackendHealth]:
-        return [backend.health(self._credential_provider) for backend in self.backends]
+        return [backend.health() for backend in self.backends]
 
 
 def _stamp(result: PulseResult | PulseDocument, source: str, backend: str) -> None:

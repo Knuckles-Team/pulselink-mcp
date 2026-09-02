@@ -61,6 +61,9 @@ class FakeProvider:
     def __init__(self, creds: dict[str, FakeMaterial]):
         self._creds = creds
 
+    def require_runtime_authority(self) -> None:
+        return None
+
     def available(self, source: str) -> bool:
         return source in self._creds
 
@@ -285,7 +288,7 @@ def test_ladder_falls_through_on_backend_error():
         def search(self, query, cursor, limit):
             return PulseResult(documents=[PulseDocument(id="ok")])
 
-    ladder = SourceLadder("test", [Boom(provider), Works(provider)], provider)
+    ladder = SourceLadder("test", [Boom(provider), Works(provider)])
     result = ladder.search("q", None, 5)
     assert result.documents[0].id == "ok"
     assert result.backend == "works"
@@ -300,7 +303,7 @@ def test_unsupported_capability_raises():
         def search(self, query, cursor, limit):
             return PulseResult()
 
-    ladder = SourceLadder("test", [OnlySearch(provider)], provider)
+    ladder = SourceLadder("test", [OnlySearch(provider)])
     with pytest.raises(RuntimeError):
         ladder.fetch("x")  # no backend supports fetch → all-fail RuntimeError
 
@@ -309,6 +312,27 @@ def test_capability_unsupported_is_distinct_type():
     backend = RedditPublicBackend(FakeProvider({}))
     with pytest.raises(CapabilityUnsupported):
         backend.transcribe("x")  # reddit has no transcribe
+
+
+def test_ladder_rejects_mismatched_authorities_before_eligibility() -> None:
+    backend_accessed = False
+
+    class ObservedBackend(SourceBackend):
+        def is_eligible(self) -> bool:
+            nonlocal backend_accessed
+            backend_accessed = True
+            return True
+
+    with pytest.raises(
+        RuntimeError,
+        match="must share one credential authority",
+    ):
+        SourceLadder(
+            "test",
+            [ObservedBackend(FakeProvider({})), ObservedBackend(FakeProvider({}))],
+        )
+
+    assert backend_accessed is False
 
 
 def test_unknown_source_raises_keyerror():

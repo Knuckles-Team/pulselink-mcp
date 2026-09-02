@@ -10,7 +10,7 @@ from __future__ import annotations
 from .base import (
     BackendHealth,
     CapabilityUnsupported,
-    CredentialProvider,
+    CredentialAuthority,
     PulseDocument,
     PulseResult,
     SourceBackend,
@@ -62,19 +62,15 @@ SOURCE_NAMES: tuple[str, ...] = (
 
 
 def build_registry(
-    credential_provider: CredentialProvider,
+    credential_authority: CredentialAuthority,
 ) -> dict[str, SourceLadder]:
     """Construct source ladders with one explicit credential authority."""
 
     def backend(backend_type: type[SourceBackend]) -> SourceBackend:
-        return backend_type(credential_provider)
+        return backend_type(credential_authority)
 
     def ladder(source: str, *backend_types: type[SourceBackend]) -> SourceLadder:
-        return SourceLadder(
-            source,
-            [backend(backend_type) for backend_type in backend_types],
-            credential_provider,
-        )
+        return SourceLadder(source, [backend(kind) for kind in backend_types])
 
     ladders = [
         # --- keyless-first global sources ---

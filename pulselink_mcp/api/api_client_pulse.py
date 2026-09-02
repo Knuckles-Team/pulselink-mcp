@@ -11,11 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..sources import build_registry
-from ..sources.base import (
-    CredentialAuthorityUnavailable,
-    CredentialProvider,
-    SourceLadder,
-)
+from ..sources.base import CredentialAuthority, SourceLadder
 
 
 class PulseLinkClient:
@@ -23,18 +19,13 @@ class PulseLinkClient:
 
     def __init__(
         self,
-        credential_provider: CredentialProvider,
-        *,
-        runtime_authority: bool = True,
+        credential_authority: CredentialAuthority,
     ) -> None:
-        self._sources = build_registry(credential_provider)
-        self._runtime_authority = runtime_authority
+        self._credential_authority = credential_authority
+        self._sources = build_registry(credential_authority)
 
     def _require_runtime_authority(self) -> None:
-        if not self._runtime_authority:
-            raise CredentialAuthorityUnavailable(
-                "PulseLink runtime credential authority is unavailable"
-            )
+        self._credential_authority.require_runtime_authority()
 
     def _ladder(self, source: str) -> SourceLadder:
         self._require_runtime_authority()

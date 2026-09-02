@@ -104,7 +104,7 @@ class XCookieBackend(SourceBackend):
         return _parse_x_graphql(resp.json())
 
     def _provider_material(self):
-        return self._credential_provider.get(self.requires_credential).materialize()
+        return self._credential_authority.get(self.requires_credential).materialize()
 
 
 def _parse_x_graphql(payload: dict) -> PulseResult:

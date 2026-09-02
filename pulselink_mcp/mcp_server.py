@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from __future__ import annotations
 
 import logging
 import sys
@@ -11,7 +12,7 @@ from agent_utilities.mcp.verbose_tools import register_tool_surface
 
 from pulselink_mcp.api import PulseLinkClient
 from pulselink_mcp.auth import create_client
-from pulselink_mcp.sources.contracts import UnavailableCredentialProvider
+from pulselink_mcp.sources.contracts import UnavailableCredentialAuthority
 
 from .mcp import register_pulse_tools
 
@@ -56,8 +57,7 @@ def _build_mcp(client: PulseLinkClient) -> tuple[Any, Any, Any]:
 def get_mcp_instance() -> tuple[Any, Any, Any]:
     """Build the non-executable schema surface used by fleet introspection."""
     client = PulseLinkClient(
-        UnavailableCredentialProvider(),
-        runtime_authority=False,
+        UnavailableCredentialAuthority(),
     )
     return _build_mcp(client)
 

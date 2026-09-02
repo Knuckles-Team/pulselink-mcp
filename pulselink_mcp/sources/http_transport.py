@@ -11,7 +11,7 @@ from agent_utilities.core.transport_security import (
     resolve_configured_tls_profile,
 )
 
-from .contracts import CredentialProvider
+from .contracts import CredentialAuthority
 
 DEFAULT_UA = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
@@ -51,10 +51,10 @@ class AuthenticatedHttpTransport:
 
     def __init__(
         self,
-        credential_provider: CredentialProvider,
+        credential_authority: CredentialAuthority,
         credential_key: str | None,
     ) -> None:
-        self._credential_provider = credential_provider
+        self._credential_authority = credential_authority
         self._credential_key = credential_key
 
     def _auth(
@@ -66,7 +66,7 @@ class AuthenticatedHttpTransport:
         base_headers = {"User-Agent": DEFAULT_UA, **(headers or {})}
         if self._credential_key is None:
             return base_headers, dict(params or {}), dict(cookies or {})
-        material = self._credential_provider.get(self._credential_key).materialize()
+        material = self._credential_authority.get(self._credential_key).materialize()
         return material.merged_into(base_headers, params, cookies)
 
     def get(

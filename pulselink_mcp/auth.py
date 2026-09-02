@@ -12,10 +12,12 @@ from agent_utilities.security.credential_provider import CredentialProvider
 from agent_utilities.security.secrets_client import SecretsClient
 
 from .api import PulseLinkClient
+from .sources.contracts import RuntimeCredentialAuthority
 
 
 def create_client(secrets_client: SecretsClient | None) -> PulseLinkClient:
     """Build a client from explicitly supplied encrypted-secret authority."""
     if secrets_client is None:
         raise RuntimeError("PulseLink requires an injected secret client")
-    return PulseLinkClient(CredentialProvider(secrets=secrets_client))
+    provider = CredentialProvider(secrets=secrets_client)
+    return PulseLinkClient(RuntimeCredentialAuthority(provider))
