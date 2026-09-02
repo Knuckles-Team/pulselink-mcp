@@ -1,6 +1,6 @@
 """Tests for X Search & Browsing Tools (externalized from agent-utilities).
 
-CONCEPT:PK-OS.governance.x-search-browse-tools — Social sources (X via xAI/Grok index)
+CONCEPT:PK-OS.governance.x-search-browse-tools — Social sources via an X live index
 """
 
 import json
@@ -18,7 +18,7 @@ from pulselink_mcp.integrations.x_search_tool import (
     x_search,
 )
 
-_AUTH = "pulselink_mcp.integrations.x_search_tool.XaiAuthManager"
+_CREDENTIAL_RESOLVER = "pulselink_mcp.integrations.x_search_tool._resolve_xai_api_key"
 
 
 class TestXSearchToolHelpers:
@@ -72,34 +72,28 @@ class TestXSearchToolsExecution:
         ctx.deps.config = {"xai": {"model": "configured-x-search-capability"}}
         return ctx
 
-    @patch(_AUTH)
+    @patch(_CREDENTIAL_RESOLVER, return_value=None)
     @patch("httpx.Client")
     @pytest.mark.asyncio
     async def test_x_search_missing_credentials(
-        self, mock_client_cls, mock_auth_cls, mock_context
+        self, mock_client_cls, credential_resolver, mock_context
     ):
-        mock_auth = MagicMock()
-        mock_auth.resolve_credentials.return_value = None
-        mock_auth_cls.return_value = mock_auth
-
         result = await x_search(mock_context, query="AI agents")
         payload = json.loads(result)
         assert payload["success"] is False
-        assert "xAI credentials are not configured" in payload["error"]
-        mock_auth.resolve_credentials.assert_called_once_with(auto_login=True)
+        assert "credentials are not configured" in payload["error"]
+        credential_resolver.assert_called_once_with()
 
-    @patch(_AUTH)
+    @patch(_CREDENTIAL_RESOLVER, return_value="mock_token_123")
     @patch("httpx.Client")
     @pytest.mark.asyncio
-    async def test_x_search_success(self, mock_client_cls, mock_auth_cls, mock_context):
-        mock_auth = MagicMock()
-        mock_auth.resolve_credentials.return_value = "mock_token_123"
-        mock_auth_cls.return_value = mock_auth
-
+    async def test_x_search_success(
+        self, mock_client_cls, credential_resolver, mock_context
+    ):
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            "output_text": "Grok result text: This is content retrieved from X search.",
+            "output_text": "Capability result: content retrieved from X search.",
             "citations": [],
         }
         mock_client = MagicMock()
@@ -107,25 +101,22 @@ class TestXSearchToolsExecution:
         mock_client.post.return_value = mock_response
         mock_client_cls.return_value = mock_client
 
-        result = await x_search(mock_context, query="Grok")
+        result = await x_search(mock_context, query="capability search")
         payload = json.loads(result)
         assert payload["success"] is True
-        assert "Grok result text" in payload["answer"]
+        assert "Capability result" in payload["answer"]
+        credential_resolver.assert_called_once_with()
 
-    @patch(_AUTH)
+    @patch(_CREDENTIAL_RESOLVER, return_value="mock_token_123")
     @patch("httpx.Client")
     @pytest.mark.asyncio
     async def test_browse_x_post_success(
-        self, mock_client_cls, mock_auth_cls, mock_context
+        self, mock_client_cls, credential_resolver, mock_context
     ):
-        mock_auth = MagicMock()
-        mock_auth.resolve_credentials.return_value = "mock_token_123"
-        mock_auth_cls.return_value = mock_auth
-
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            "output_text": "Detailed post content: Grok search for this post status 123456789.",
+            "output_text": "Detailed post content for status 123456789.",
             "citations": [],
         }
         mock_client = MagicMock()
@@ -139,6 +130,7 @@ class TestXSearchToolsExecution:
         payload = json.loads(result)
         assert payload["success"] is True
         assert "Detailed post content" in payload["answer"]
+        credential_resolver.assert_called_once_with()
 
     @pytest.mark.asyncio
     async def test_browse_x_post_invalid_url(self, mock_context):
@@ -146,32 +138,3 @@ class TestXSearchToolsExecution:
         payload = json.loads(result)
         assert payload["success"] is False
         assert "Invalid X post URL format" in payload["error"]
-
-    @patch(_AUTH)
-    @patch("httpx.Client")
-    @pytest.mark.asyncio
-    async def test_x_search_auto_login_success(
-        self, mock_client_cls, mock_auth_cls, mock_context
-    ):
-        mock_auth = MagicMock()
-        mock_auth.resolve_credentials.side_effect = lambda auto_login=False: (
-            "auto_login_key" if auto_login else None
-        )
-        mock_auth_cls.return_value = mock_auth
-
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "output_text": "AI agents are revolutionary.",
-            "citations": [],
-        }
-        mock_client = MagicMock()
-        mock_client.__enter__.return_value = mock_client
-        mock_client.post.return_value = mock_response
-        mock_client_cls.return_value = mock_client
-
-        result = await x_search(mock_context, query="AI agents")
-        payload = json.loads(result)
-        assert payload["success"] is True
-        assert "AI agents are revolutionary." in payload["answer"]
-        mock_auth.resolve_credentials.assert_called_once_with(auto_login=True)

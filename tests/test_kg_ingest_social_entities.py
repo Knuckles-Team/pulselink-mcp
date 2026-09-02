@@ -31,8 +31,8 @@ def test_map_documents_extracts_hashtags_mentions_tools_from_own_entities():
             "extra": {
                 "entities": {
                     "hashtags": [{"tag": "AI"}],
-                    "user_mentions": [{"username": "openai"}],
-                    "urls": [{"expanded_url": "https://github.com/openai/whatever"}],
+                    "user_mentions": [{"username": "example_ai"}],
+                    "urls": [{"expanded_url": "https://github.com/example/project"}],
                 }
             },
         }
@@ -41,7 +41,7 @@ def test_map_documents_extracts_hashtags_mentions_tools_from_own_entities():
     nodes, edges = _map_documents("x", documents)
 
     hashtag = _node(nodes, "hashtag:ai")
-    mention = _node(nodes, "mention:openai")
+    mention = _node(nodes, "mention:example_ai")
     tool = _node(nodes, "tool:github")
     assert hashtag["node_type"] == "Hashtag"
     assert mention["node_type"] == "Mention"
@@ -55,7 +55,7 @@ def test_map_documents_extracts_hashtags_mentions_tools_from_own_entities():
     doc_id = "pulselink:document:x:1001"
     edge_rels = {(e["source"], e["target"], e["relationship"]) for e in edges}
     assert (doc_id, "hashtag:ai", "taggedWithHashtag") in edge_rels
-    assert (doc_id, "mention:openai", "mentionsHandle") in edge_rels
+    assert (doc_id, "mention:example_ai", "mentionsHandle") in edge_rels
     assert (doc_id, "tool:github", "referencesTool") in edge_rels
 
 

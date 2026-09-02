@@ -3,7 +3,7 @@ import ast
 import glob
 import os
 import sys
-from typing import TypeGuard
+from typing import NoReturn, TypeGuard
 
 import tomllib
 
@@ -224,68 +224,79 @@ def _print_local_report(res, baseline) -> None:
     print(f"- Target Baseline   : {baseline:.1f}%")
 
 
-def _run_local_mode(cwd: str) -> None:
-    project_name = _canonical_project_name(cwd)
-    res = verify_agent(cwd)
-    if not res:
-        if project_name == "pulselink-mcp":
-            print(
-                "PulseLink integration inventory is missing its API client or MCP server",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-        # Packages without an API/MCP surface are outside this verifier.
-        print(
-            "Skipping integration parity verification: No mcp_server.py/api_client.py found in current directory."
-        )
-        sys.exit(0)
+def _stop_local_verification(message: str) -> NoReturn:
+    print(message, file=sys.stderr)
+    raise SystemExit(1)
 
+
+def _local_inventory(cwd: str, project_name: str):
+    res = verify_agent(cwd)
+    if res:
+        return res
+    if project_name == "pulselink-mcp":
+        _stop_local_verification(
+            "PulseLink integration inventory is missing its API client or MCP server"
+        )
+    print(
+        "Skipping integration parity verification: No mcp_server.py/api_client.py found in current directory."
+    )
+    return None
+
+
+def _require_pulselink_inventory(cwd: str) -> None:
     pulselink_client = os.path.join(
         cwd,
         "pulselink_mcp",
         "api",
         "api_client_pulse.py",
     )
-    pulselink_package = os.path.join(cwd, "pulselink_mcp")
-    if os.path.isdir(pulselink_package) and not os.path.exists(pulselink_client):
-        print("PulseLink API inventory module is missing", file=sys.stderr)
-        sys.exit(1)
-    if os.path.exists(pulselink_client):
-        pulse_methods = parse_api_client(pulselink_client)
-        expected = {"fetch", "list_items", "search", "sources", "status", "transcribe"}
-        missing = expected - set(pulse_methods)
-        if missing:
-            print(
-                "PulseLink API inventory is incomplete: " + ", ".join(sorted(missing)),
-                file=sys.stderr,
-            )
-            sys.exit(1)
+    if not os.path.exists(pulselink_client):
+        _stop_local_verification("PulseLink API inventory module is missing")
+    pulse_methods = parse_api_client(pulselink_client)
+    expected = {"fetch", "list_items", "search", "sources", "status", "transcribe"}
+    missing = expected - set(pulse_methods)
+    if missing:
+        _stop_local_verification(
+            "PulseLink API inventory is incomplete: " + ", ".join(sorted(missing))
+        )
 
-    agent_name = res["agent_name"]
+
+def _require_pulselink_mappings(res) -> None:
+    if res["covered_methods"] == 0:
+        _stop_local_verification("\n❌ FAILED: PulseLink has zero mapped MCP methods")
+
+
+def _require_coverage_baseline(res, baseline: float) -> None:
     coverage = res["coverage"]
-    baseline = BASELINES.get(agent_name, 0.0)
-    _print_local_report(res, baseline)
-
-    if agent_name == "pulselink-mcp" and res["covered_methods"] == 0:
-        print("\n❌ FAILED: PulseLink has zero mapped MCP methods", file=sys.stderr)
-        sys.exit(1)
-
     # Allow small floating point tolerance (0.05%)
-    if coverage < (baseline - 0.05):
-        print(
-            f"\n❌ FAILED: Integration coverage ({coverage:.1f}%) has DEGRADED below the required baseline of {baseline:.1f}%!"
-        )
-        print(
-            "Please ensure any new or refactored API client methods are properly integrated into MCP server tools."
-        )
-        if res["unmapped"]:
-            print("\nUnmapped API methods:")
-            for m in res["unmapped"]:
-                print(f"  - {m}")
-        sys.exit(1)
+    if coverage >= (baseline - 0.05):
+        return
+    print(
+        f"\n❌ FAILED: Integration coverage ({coverage:.1f}%) has DEGRADED below the required baseline of {baseline:.1f}%!"
+    )
+    print(
+        "Please ensure any new or refactored API client methods are properly integrated into MCP server tools."
+    )
+    for method in res["unmapped"]:
+        print(f"  - {method}")
+    raise SystemExit(1)
+
+
+def _run_local_mode(cwd: str) -> None:
+    project_name = _canonical_project_name(cwd)
+    res = _local_inventory(cwd, project_name)
+    if res is None:
+        raise SystemExit(0)
+    if project_name == "pulselink-mcp":
+        _require_pulselink_inventory(cwd)
+        _require_pulselink_mappings(res)
+
+    baseline = BASELINES.get(project_name, 0.0)
+    _print_local_report(res, baseline)
+    _require_coverage_baseline(res, baseline)
 
     print("\n✅ PASSED: Integration coverage meets or exceeds the required baseline!")
-    sys.exit(0)
+    raise SystemExit(0)
 
 
 def _discover_agent_dirs(agents_dir: str) -> list:

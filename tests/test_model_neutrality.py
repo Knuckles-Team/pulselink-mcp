@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -22,6 +23,10 @@ def _repository_text() -> dict[Path, str]:
     for path in _ROOT.rglob("*"):
         if not path.is_file() or path.name == "uv.lock":
             continue
+        if path == Path(__file__).resolve():
+            # This module includes one synthetic forbidden expression to prove
+            # the structural detector itself fails closed.
+            continue
         if any(
             part in {".git", ".pytest_cache", ".venv", "__pycache__"}
             for part in path.parts
@@ -35,20 +40,42 @@ def _repository_text() -> dict[Path, str]:
     return documents
 
 
-def test_repository_has_no_concrete_model_names_or_model_provider_fallbacks() -> None:
-    documents = _repository_text()
-    concrete_models = (
-        "gpt" + "-4o",
-        "grok" + "-4.3",
-        "son" + "net",
-    )
-    default_markers = ("${PROVIDER" + ":-", "${MODEL_ID" + ":-")
+_MODEL_SELECTION_DEFAULT = re.compile(
+    r"\$\{(?P<variable>PROVIDER|MODEL_ID):-(?P<default>[^}]+)\}"
+)
+_EXPLICIT_MODEL_SELECTION = re.compile(
+    r"\$\{(?P<variable>PROVIDER|MODEL_ID):\?(?P<message>[^}]+)\}"
+)
 
-    violations = {
-        path: token
+
+def test_model_default_detector_rejects_any_structural_fallback() -> None:
+    synthetic_compose = "MODEL_ID=${MODEL_ID:-fallback-capability}"
+
+    assert _MODEL_SELECTION_DEFAULT.search(synthetic_compose) is not None
+
+
+def test_repository_requires_explicit_agent_model_capabilities() -> None:
+    documents = _repository_text()
+    defaults = {
+        path: match.group(0)
         for path, content in documents.items()
-        for token in (*concrete_models, *default_markers)
-        if token.casefold() in content.casefold()
+        if (match := _MODEL_SELECTION_DEFAULT.search(content)) is not None
+    }
+    compose = documents[Path("docker/agent.compose.yml")]
+    required = {
+        match.group("variable") for match in _EXPLICIT_MODEL_SELECTION.finditer(compose)
     }
 
-    assert violations == {}
+    assert defaults == {}
+    assert required == {"PROVIDER", "MODEL_ID"}
+
+
+def test_documented_model_selection_is_unset_until_operator_configuration() -> None:
+    env_example = _repository_text()[Path(".env.example")]
+
+    selections = {
+        variable: re.search(rf"^# {variable}=\s*(?:#.*)?$", env_example, re.MULTILINE)
+        for variable in ("PROVIDER", "MODEL_ID", "XAI_SEARCH_MODEL")
+    }
+
+    assert all(match is not None for match in selections.values())

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """X (formerly Twitter) Search and Browsing Tools.
 
-CONCEPT:PK-OS.governance.x-search-browse-tools — Social sources (X via xAI/Grok's live index)
+CONCEPT:PK-OS.governance.x-search-browse-tools — Social sources via an X live index
 
 Externalized from agent-utilities (was ``agent_utilities/tools/x_search_tool.py``):
 PulseLink is the home for X reach, so the X-specific search/browse tools and their
@@ -9,10 +9,10 @@ xAI credential resolution live here. agent-utilities imports these **optionally*
 (``tool_registry`` try/except), so its core carries no X integration.
 
 These are ``pydantic-ai`` agent tools (distinct from PulseLink's MCP source
-backends): they reach X through xAI/Grok's native ``x_search`` index rather than
+backends): they reach X through the provider's native ``x_search`` index rather than
 X's own API/cookies (PulseLink's ``x`` source ladder covers those paths). The xAI
-provider auth itself (``XaiAuthManager``) remains general agent-utilities infra —
-it is also used for Grok-as-LLM — and is imported from there.
+provider auth itself (``XaiAuthManager``) remains general agent-utilities infra
+and is imported from there.
 """
 
 import json
@@ -346,7 +346,7 @@ async def x_search(
     from_date: str | None = None,
     to_date: str | None = None,
 ) -> str:
-    """Search X (formerly Twitter) posts, profiles, and threads using xAI's native Grok index.
+    """Search X posts, profiles, and threads using the configured live index.
 
     This leverages the live X search tool via xAI, returning detailed summaries and citations.
     Exactly one of allowed_x_handles or excluded_x_handles may be specified, but not both.
@@ -463,7 +463,7 @@ def _parse_x_post_url(url: str) -> _XPostRef | None:
 
 
 def _build_x_post_lookup_query(ref: _XPostRef) -> str:
-    """Build the query that guides Grok's live index lookup for one specific post."""
+    """Build the query that guides a live-index lookup for one specific post."""
     query_parts = [
         f"Retrieve the exact text, author, timestamp, and engagement metrics of the X post status ID {ref.post_id}"
     ]
