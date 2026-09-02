@@ -61,17 +61,29 @@ def test_map_documents_extracts_hashtags_mentions_tools_from_own_entities():
 
 def test_map_documents_dedupes_shared_hashtag_across_documents():
     documents = [
-        {"id": "1", "text": "post one", "extra": {"entities": {"hashtags": [{"tag": "AI"}]}}},
-        {"id": "2", "text": "post two", "extra": {"entities": {"hashtags": [{"tag": "ai"}]}}},
+        {
+            "id": "1",
+            "text": "post one",
+            "extra": {"entities": {"hashtags": [{"tag": "AI"}]}},
+        },
+        {
+            "id": "2",
+            "text": "post two",
+            "extra": {"entities": {"hashtags": [{"tag": "ai"}]}},
+        },
     ]
 
     nodes, edges = _map_documents("x", documents)
 
     hashtag_nodes = [n for n in nodes if n["node_type"] == "Hashtag"]
-    assert len(hashtag_nodes) == 1, "the same hashtag across documents must not duplicate the node"
+    assert len(hashtag_nodes) == 1, (
+        "the same hashtag across documents must not duplicate the node"
+    )
 
     hashtag_edges = [e for e in edges if e["relationship"] == "taggedWithHashtag"]
-    assert len(hashtag_edges) == 2, "each document still gets its own edge to the shared node"
+    assert len(hashtag_edges) == 2, (
+        "each document still gets its own edge to the shared node"
+    )
     assert {e["source"] for e in hashtag_edges} == {
         "pulselink:document:x:1",
         "pulselink:document:x:2",
