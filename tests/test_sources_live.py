@@ -10,32 +10,44 @@ in the unit suite with injected credentials, not here.
 from __future__ import annotations
 
 import pytest
+from agent_utilities.security.source_credentials import NoCredential
 
-from pulselink_mcp.sources import get_ladder
+from pulselink_mcp.sources import build_registry
 
 pytestmark = pytest.mark.live
 
 
+class KeylessCredentialProvider:
+    def available(self, source: str) -> bool:
+        return False
+
+    def get(self, source: str) -> NoCredential:
+        return NoCredential()
+
+
+SOURCES = build_registry(KeylessCredentialProvider())
+
+
 def test_hackernews_live_search():
-    result = get_ladder("hackernews").search("python", cursor=None, limit=5)
+    result = SOURCES["hackernews"].search("python", cursor=None, limit=5)
     assert result.documents
     assert all(d.id for d in result.documents)
     assert result.documents[0].title or result.documents[0].text
 
 
 def test_web_live_fetch_via_jina():
-    doc = get_ladder("web").fetch("https://example.com")
+    doc = SOURCES["web"].fetch("https://example.com")
     assert "example" in doc.text.lower()
 
 
 def test_v2ex_live_hot():
-    result = get_ladder("v2ex").list_items("hot", None, 5)
+    result = SOURCES["v2ex"].list_items("hot", None, 5)
     assert result.documents
     assert result.documents[0].url
 
 
 def test_github_public_live_search():
-    result = get_ladder("github").search("knowledge graph", None, 3)
+    result = SOURCES["github"].search("knowledge graph", None, 3)
     assert result.documents
     assert result.documents[0].metrics.get("stars") is not None
 
@@ -45,7 +57,7 @@ def test_github_public_live_search():
     reason="feedparser not installed",
 )
 def test_news_live_search():
-    result = get_ladder("news").search("artificial intelligence", None, 5)
+    result = SOURCES["news"].search("artificial intelligence", None, 5)
     assert result.documents
 
 
@@ -54,6 +66,6 @@ def test_news_live_search():
     reason="yt-dlp not installed",
 )
 def test_youtube_live_search():
-    result = get_ladder("youtube").search("transformer architecture", None, 3)
+    result = SOURCES["youtube"].search("transformer architecture", None, 3)
     assert result.documents
     assert all("youtube.com" in d.url or d.id for d in result.documents)

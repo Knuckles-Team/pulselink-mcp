@@ -10,9 +10,10 @@ from agent_utilities.mcp.server_factory import create_mcp_server
 from agent_utilities.mcp.verbose_tools import register_tool_surface
 
 from pulselink_mcp.api import PulseLinkClient
-from pulselink_mcp.auth import get_client
+from pulselink_mcp.auth import create_client
+from pulselink_mcp.sources.base import UnavailableCredentialProvider
 
-from .mcp import register_pulse_tools  # noqa: F401  (auto-discovered as tag "pulse")
+from .mcp import register_pulse_tools
 
 __version__ = "2.1.0"
 
@@ -20,9 +21,14 @@ logger = get_logger(name="MCP_Server")
 logger.setLevel(logging.INFO)
 
 
-def get_mcp_instance() -> tuple[Any, Any, Any]:
-    """Initialize and return the PulseLink MCP MCP instance, args, and middlewares."""
+def get_mcp_instance(*, secrets_client: Any = None) -> tuple[Any, Any, Any]:
+    """Initialize PulseLink from explicitly injected encrypted-secret authority."""
     load_config()
+    client = (
+        PulseLinkClient(UnavailableCredentialProvider())
+        if secrets_client is None
+        else create_client(secrets_client)
+    )
 
     args, mcp, middlewares = create_mcp_server(
         name="PulseLink MCP",
@@ -37,9 +43,11 @@ def get_mcp_instance() -> tuple[Any, Any, Any]:
     register_tool_surface(
         mcp,
         client_cls=PulseLinkClient,
-        get_client=get_client,
+        get_client=lambda: client,
         service="pulselink-mcp",
-        tools_module=sys.modules[__name__],
+        registrars=[
+            ("pulse", "PULSETOOL", lambda target: register_pulse_tools(target, client))
+        ],
     )
 
     for mw in middlewares:
@@ -49,7 +57,22 @@ def get_mcp_instance() -> tuple[Any, Any, Any]:
 
 
 def mcp_server():
-    mcp, args, _ = get_mcp_instance()
+    if any(argument in {"-h", "--help"} for argument in sys.argv[1:]):
+        get_mcp_instance()
+        return
+
+    from agent_utilities.knowledge_graph.core.graph_compute import GraphComputeEngine
+    from agent_utilities.security.secrets_client import (
+        InEpistemicGraphBackend,
+        SecretsClient,
+    )
+
+    engine = GraphComputeEngine.get_or_create(
+        graph_name="__secrets__",
+        backend_type="rust",
+    )
+    secrets_client = SecretsClient(InEpistemicGraphBackend(engine))
+    mcp, args, _ = get_mcp_instance(secrets_client=secrets_client)
 
     print(f"PulseLink MCP v{__version__}", file=sys.stderr)
     print("\nStarting MCP Server", file=sys.stderr)

@@ -15,8 +15,8 @@ import logging
 from fastmcp import Context, FastMCP
 from pydantic import Field
 
-from ..auth import get_client
-from ..sources import list_sources
+from ..api import PulseLinkClient
+from ..sources import SOURCE_NAMES
 
 logger = logging.getLogger("pulselink_mcp.mcp")
 
@@ -35,13 +35,15 @@ def _maybe_ingest(source: str, result: dict) -> None:
     ingest_pulse_documents(source, docs)
 
 
-def register_pulse_tools(mcp: FastMCP) -> None:
-    """Register the pulse reach tools onto ``mcp``."""
+def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
+    """Register pulse tools with one explicitly composed client."""
+    if client is None:
+        raise RuntimeError("pulse tools require an injected client")
 
     @mcp.tool(tags={"pulse"})
     async def pulse_search(
         source: str = Field(
-            description=f"Source to search. One of: {', '.join(list_sources())}."
+            description=f"Source to search. One of: {', '.join(SOURCE_NAMES)}."
         ),
         query: str = Field(description="Search query."),
         cursor: str | None = Field(
@@ -55,7 +57,7 @@ def register_pulse_tools(mcp: FastMCP) -> None:
             await ctx.info("Executing configured pulse search")
         try:
             result = await asyncio.to_thread(
-                get_client().search, source, query, cursor, limit
+                client.search, source, query, cursor, limit
             )
             await asyncio.to_thread(_maybe_ingest, source, result)
             return result
@@ -72,7 +74,7 @@ def register_pulse_tools(mcp: FastMCP) -> None:
         if ctx:
             await ctx.info(f"pulse_fetch source={source!r} target={target!r}")
         try:
-            result = await asyncio.to_thread(get_client().fetch, source, target)
+            result = await asyncio.to_thread(client.fetch, source, target)
             await asyncio.to_thread(_maybe_ingest, source, result)
             return result
         except Exception:  # noqa: BLE001
@@ -94,7 +96,7 @@ def register_pulse_tools(mcp: FastMCP) -> None:
             await ctx.info(f"pulse_list source={source!r} channel={channel!r}")
         try:
             result = await asyncio.to_thread(
-                get_client().list_items, source, channel, cursor, limit
+                client.list_items, source, channel, cursor, limit
             )
             await asyncio.to_thread(_maybe_ingest, source, result)
             return result
@@ -114,7 +116,7 @@ def register_pulse_tools(mcp: FastMCP) -> None:
         if ctx:
             await ctx.info(f"pulse_transcribe source={source!r} target={target!r}")
         try:
-            return await asyncio.to_thread(get_client().transcribe, target, source)
+            return await asyncio.to_thread(client.transcribe, target, source)
         except Exception:  # noqa: BLE001
             return {"error": "Operation failed", "source": source}
 
@@ -123,7 +125,7 @@ def register_pulse_tools(mcp: FastMCP) -> None:
         """Per-source backend + credential health (the doctor). CONCEPT:PK-OS.governance.search-fetch-list-transcribe"""
         if ctx:
             await ctx.info("pulse_status")
-        return await asyncio.to_thread(get_client().status)
+        return await asyncio.to_thread(client.status)
 
     @mcp.tool(tags={"pulse", "kg"})
     async def pulse_ingest(
@@ -152,11 +154,11 @@ def register_pulse_tools(mcp: FastMCP) -> None:
         try:
             if channel:
                 result = await asyncio.to_thread(
-                    get_client().list_items, source, channel, None, limit
+                    client.list_items, source, channel, None, limit
                 )
             else:
                 result = await asyncio.to_thread(
-                    get_client().search, source, query, None, limit
+                    client.search, source, query, None, limit
                 )
         except Exception:  # noqa: BLE001
             return {"error": "Operation failed", "source": source}

@@ -9,7 +9,7 @@ actually awaits `ctx.info(...)`.
 """
 
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -29,16 +29,14 @@ async def test_pulse_status_awaits_ctx_info():
             return decorator
 
     mock_mcp: Any = MockMCP()
-    register_pulse_tools(mock_mcp)  # type: ignore
+    mock_client = MagicMock()
+    mock_client.status.return_value = {"ok": True}
+    register_pulse_tools(mock_mcp, mock_client)  # type: ignore
 
     mock_ctx = MagicMock()
     mock_ctx.info = AsyncMock()
 
-    mock_client = MagicMock()
-    mock_client.status.return_value = {"ok": True}
-
     pulse_status = tools_dict["pulse_status"]
-    with patch("pulselink_mcp.mcp.mcp_pulse.get_client", return_value=mock_client):
-        await pulse_status(ctx=mock_ctx)
+    await pulse_status(ctx=mock_ctx)
 
     mock_ctx.info.assert_awaited_once()

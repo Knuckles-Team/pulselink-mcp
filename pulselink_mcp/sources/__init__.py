@@ -10,8 +10,10 @@ from __future__ import annotations
 from .base import (
     BackendHealth,
     CapabilityUnsupported,
+    CredentialProvider,
     PulseDocument,
     PulseResult,
+    SourceBackend,
     SourceLadder,
 )
 from .china import BilibiliBackend, XiaohongshuBackend, XueqiuBackend
@@ -32,59 +34,65 @@ from .social import (
 from .web import GoogleNewsBackend, JinaWebBackend, RssBackend
 
 __all__ = [
-    "SOURCES",
-    "get_ladder",
-    "list_sources",
-    "doctor",
+    "SOURCE_NAMES",
+    "build_registry",
     "BackendHealth",
     "CapabilityUnsupported",
     "PulseDocument",
     "PulseResult",
 ]
 
+SOURCE_NAMES: tuple[str, ...] = (
+    "bilibili",
+    "exa",
+    "github",
+    "hackernews",
+    "linkedin",
+    "news",
+    "podcast",
+    "reddit",
+    "rss",
+    "v2ex",
+    "web",
+    "x",
+    "xiaohongshu",
+    "xueqiu",
+    "youtube",
+)
 
-def _build_registry() -> dict[str, SourceLadder]:
-    """Construct every source ladder. Order within a ladder = fallback priority."""
+
+def build_registry(
+    credential_provider: CredentialProvider,
+) -> dict[str, SourceLadder]:
+    """Construct source ladders with one explicit credential authority."""
+
+    def backend(backend_type: type[SourceBackend]) -> SourceBackend:
+        return backend_type(credential_provider)
+
+    def ladder(source: str, *backend_types: type[SourceBackend]) -> SourceLadder:
+        return SourceLadder(
+            source,
+            [backend(backend_type) for backend_type in backend_types],
+            credential_provider,
+        )
+
     ladders = [
         # --- keyless-first global sources ---
-        SourceLadder("youtube", [YouTubeBackend()]),
-        SourceLadder("web", [JinaWebBackend()]),
-        SourceLadder("rss", [RssBackend()]),
-        SourceLadder("news", [GoogleNewsBackend()]),
-        SourceLadder("hackernews", [HackerNewsBackend()]),
-        SourceLadder("v2ex", [V2exBackend()]),
-        SourceLadder("bilibili", [BilibiliBackend()]),
-        SourceLadder("podcast", [PodcastBackend()]),
+        ladder("youtube", YouTubeBackend),
+        ladder("web", JinaWebBackend),
+        ladder("rss", RssBackend),
+        ladder("news", GoogleNewsBackend),
+        ladder("hackernews", HackerNewsBackend),
+        ladder("v2ex", V2exBackend),
+        ladder("bilibili", BilibiliBackend),
+        ladder("podcast", PodcastBackend),
         # --- auth-laddered: official API → cookie/public fallback ---
-        SourceLadder("github", [GitHubTokenBackend(), GitHubPublicBackend()]),
-        SourceLadder("reddit", [RedditOAuthBackend(), RedditPublicBackend()]),
-        SourceLadder("x", [XApiBackend(), XCookieBackend()]),
-        SourceLadder("linkedin", [LinkedInCookieBackend(), LinkedInJinaBackend()]),
-        SourceLadder("exa", [ExaBackend()]),
-        SourceLadder("xiaohongshu", [XiaohongshuBackend()]),
-        SourceLadder("xueqiu", [XueqiuBackend()]),
+        ladder("github", GitHubTokenBackend, GitHubPublicBackend),
+        ladder("reddit", RedditOAuthBackend, RedditPublicBackend),
+        ladder("x", XApiBackend, XCookieBackend),
+        ladder("linkedin", LinkedInCookieBackend, LinkedInJinaBackend),
+        ladder("exa", ExaBackend),
+        ladder("xiaohongshu", XiaohongshuBackend),
+        ladder("xueqiu", XueqiuBackend),
     ]
     return {ladder.source: ladder for ladder in ladders}
-
-
-SOURCES: dict[str, SourceLadder] = _build_registry()
-
-
-def get_ladder(source: str) -> SourceLadder:
-    """Return the ladder for ``source`` (raises ``KeyError`` with the valid set)."""
-    ladder = SOURCES.get(source)
-    if ladder is None:
-        raise KeyError(
-            f"unknown source {source!r}. Available: {', '.join(sorted(SOURCES))}"
-        )
-    return ladder
-
-
-def list_sources() -> list[str]:
-    """All registered source names."""
-    return sorted(SOURCES)
-
-
-def doctor() -> dict[str, list[BackendHealth]]:
-    """Per-source backend health (the server-side 'doctor')."""
-    return {name: ladder.health() for name, ladder in SOURCES.items()}

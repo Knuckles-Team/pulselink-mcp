@@ -9,8 +9,8 @@ ladder selects the **highest-fidelity backend that is eligible and healthy**:
 
   * A **keyless** backend (``requires_credential is None``) is always eligible.
   * An **auth** backend is eligible only when the
-    :class:`~agent_utilities.security.credential_provider.CredentialProvider`
-    reports a usable credential for its source key — so cookie/official backends
+    injected credential authority reports a usable credential for its source key
+    — so cookie/official backends
     light up only when their credential exists, and otherwise the ladder falls
     back to the keyless backend with zero configuration.
 
@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import atexit
 import logging
-from typing import Any
+from typing import Any, Protocol
 
 import requests
 from agent_utilities.core.transport_security import (
@@ -45,6 +45,30 @@ DEFAULT_TIMEOUT = 20
 
 class CapabilityUnsupported(RuntimeError):
     """Raised when a backend does not implement a requested capability."""
+
+
+class CredentialAuthorityUnavailable(RuntimeError):
+    """Raised when source composition omitted credential authority."""
+
+
+class CredentialProvider(Protocol):
+    """Minimal injected credential authority consumed by source ladders."""
+
+    def available(self, source: str) -> bool: ...
+
+    def get(self, source: str) -> Any: ...
+
+
+class UnavailableCredentialProvider:
+    """Fail-closed authority used only for schema/help construction."""
+
+    def available(self, source: str) -> bool:
+        return False
+
+    def get(self, source: str) -> Any:
+        raise CredentialAuthorityUnavailable(
+            f"credential authority is unavailable for source {source!r}"
+        )
 
 
 class PulseDocument(BaseModel):
@@ -82,7 +106,6 @@ class BackendHealth(BaseModel):
     detail: str = ""
 
 
-_PROVIDER_OVERRIDE: Any = None
 _HTTP_SESSION: requests.Session | None = None
 _TLS_PROFILE: ResolvedTLSProfile | None = None
 
@@ -110,23 +133,6 @@ def close_configured_session() -> None:
 atexit.register(close_configured_session)
 
 
-def set_credential_provider(provider: Any) -> None:
-    """Inject a credential provider (tests / embedding). ``None`` restores default."""
-    global _PROVIDER_OVERRIDE
-    _PROVIDER_OVERRIDE = provider
-
-
-def _provider() -> Any:
-    """Return the required shared credential provider."""
-    if _PROVIDER_OVERRIDE is not None:
-        return _PROVIDER_OVERRIDE
-    from agent_utilities.security.credential_provider import (
-        get_credential_provider,
-    )
-
-    return get_credential_provider()
-
-
 class SourceBackend:
     """One way to reach a source's content.
 
@@ -139,6 +145,13 @@ class SourceBackend:
     name: str = "base"
     #: Provider source key required for eligibility, or ``None`` for keyless.
     requires_credential: str | None = None
+
+    def __init__(self, credential_provider: CredentialProvider) -> None:
+        if credential_provider is None:
+            raise CredentialAuthorityUnavailable(
+                "source backend requires injected credential authority"
+            )
+        self._credential_provider = credential_provider
 
     # -- eligibility / health ------------------------------------------------
     def is_eligible(self, provider: Any) -> bool:
@@ -171,7 +184,7 @@ class SourceBackend:
         base_headers = {"User-Agent": DEFAULT_UA, **(headers or {})}
         if self.requires_credential is None:
             return base_headers, dict(params or {}), dict(cookies or {})
-        material = _provider().get(self.requires_credential).materialize()
+        material = self._credential_provider.get(self.requires_credential).materialize()
         return material.merged_into(base_headers, params, cookies)
 
     def get(
@@ -217,16 +230,29 @@ class SourceBackend:
 class SourceLadder:
     """An ordered set of backends for one source, with first-success fallback."""
 
-    def __init__(self, source: str, backends: list[SourceBackend]) -> None:
+    def __init__(
+        self,
+        source: str,
+        backends: list[SourceBackend],
+        credential_provider: CredentialProvider,
+    ) -> None:
+        if credential_provider is None:
+            raise CredentialAuthorityUnavailable(
+                "source ladder requires injected credential authority"
+            )
         self.source = source
         self.backends = backends
+        self._credential_provider = credential_provider
 
-    def _eligible(self, provider: Any) -> list[SourceBackend]:
-        return [b for b in self.backends if b.is_eligible(provider)]
+    def _eligible(self) -> list[SourceBackend]:
+        return [
+            backend
+            for backend in self.backends
+            if backend.is_eligible(self._credential_provider)
+        ]
 
     def _run(self, capability: str, *args: Any) -> PulseResult | PulseDocument:
-        provider = _provider()
-        eligible = self._eligible(provider)
+        eligible = self._eligible()
         if not eligible:
             raise CapabilityUnsupported(
                 f"no eligible backend for source '{self.source}'"
@@ -267,8 +293,7 @@ class SourceLadder:
         return self._run("transcribe", url_or_id)  # type: ignore[return-value]
 
     def health(self) -> list[BackendHealth]:
-        provider = _provider()
-        return [b.health(provider) for b in self.backends]
+        return [backend.health(self._credential_provider) for backend in self.backends]
 
 
 def _stamp(result: PulseResult | PulseDocument, source: str, backend: str) -> None:

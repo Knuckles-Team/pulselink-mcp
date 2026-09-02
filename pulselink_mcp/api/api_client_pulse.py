@@ -11,33 +11,48 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..sources import doctor, get_ladder, list_sources
+from ..sources import build_registry
+from ..sources.base import CredentialProvider, SourceLadder
 
 
 class PulseLinkClient:
     """Thin facade delegating to the source registry."""
 
+    def __init__(self, credential_provider: CredentialProvider) -> None:
+        self._sources = build_registry(credential_provider)
+
+    def _ladder(self, source: str) -> SourceLadder:
+        ladder = self._sources.get(source)
+        if ladder is None:
+            raise KeyError(
+                f"unknown source {source!r}. Available: "
+                f"{', '.join(sorted(self._sources))}"
+            )
+        return ladder
+
     def sources(self) -> list[str]:
-        return list_sources()
+        return sorted(self._sources)
 
     def search(
         self, source: str, query: str, cursor: str | None = None, limit: int = 10
     ) -> dict[str, Any]:
-        return get_ladder(source).search(query, cursor, limit).model_dump()
+        return self._ladder(source).search(query, cursor, limit).model_dump()
 
     def fetch(self, source: str, target: str) -> dict[str, Any]:
-        return get_ladder(source).fetch(target).model_dump()
+        return self._ladder(source).fetch(target).model_dump()
 
     def list_items(
         self, source: str, channel: str, cursor: str | None = None, limit: int = 10
     ) -> dict[str, Any]:
-        return get_ladder(source).list_items(channel, cursor, limit).model_dump()
+        return self._ladder(source).list_items(channel, cursor, limit).model_dump()
 
     def transcribe(self, target: str, source: str = "youtube") -> dict[str, Any]:
-        return get_ladder(source).transcribe(target).model_dump()
+        return self._ladder(source).transcribe(target).model_dump()
 
     def status(self) -> dict[str, list[dict[str, Any]]]:
         return {
             name: [h.model_dump() for h in backends]
-            for name, backends in doctor().items()
+            for name, backends in (
+                (name, ladder.health()) for name, ladder in self._sources.items()
+            )
         }

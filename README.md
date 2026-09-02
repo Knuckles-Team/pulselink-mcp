@@ -201,10 +201,16 @@ _6 action-routed tool(s) · 6 verbose 1:1 tool(s). Each is enabled unless its `<
 | `TRANSPORT` | `stdio` | options: stdio, streamable-http, sse |
 | `TLS_PROFILE` | `private-pki` | TLS verification is mandatory. Select a named runtime profile from AgentConfig. |
 | `TLS_PROFILES_REF` | `secret://runtime/tls-profiles` |  |
+| `PULSELINK_TLS_PROFILE` | `private-pki` |  |
+| `PULSELINK_TLS_PROFILE_REF` | `secret://runtime/pulselink-tls-profile` |  |
+| `MODEL_TLS_PROFILE` | `public-default` |  |
+| `MODEL_TLS_PROFILE_REF` | `secret://runtime/model-tls-profile` |  |
+| `PULSELINK_MCP_MCP_IMAGE` | `registry.example/pulselink-mcp@sha256:<digest>` |  |
+| `PULSELINK_MCP_AGENT_IMAGE` | `registry.example/pulselink-agent@sha256:<digest>` |  |
 | `ENABLE_OTEL` | `True` |  |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:8080/api/public/otel` |  |
-| `OTEL_EXPORTER_OTLP_PUBLIC_KEY` | secret-injected |  |
-| `OTEL_EXPORTER_OTLP_SECRET_KEY` | secret-injected |  |
+| `OTEL_EXPORTER_OTLP_PUBLIC_KEY_REF` | `secret://observability/otel/public-key` |  |
+| `OTEL_EXPORTER_OTLP_SECRET_KEY_REF` | `secret://observability/otel/secret-key` |  |
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | `http/protobuf` |  |
 | `EUNOMIA_TYPE` | `none` | options: none, embedded, remote |
 | `EUNOMIA_POLICY_FILE` | `mcp_policies.json` |  |
@@ -214,7 +220,7 @@ _6 action-routed tool(s) · 6 verbose 1:1 tool(s). Each is enabled unless its `<
 | `XAI_SEARCH_TIMEOUT_SECONDS` | `180` | per-request timeout (seconds) |
 | `XAI_SEARCH_RETRIES` | `2` | retry attempts on failure |
 | `PULSETOOL` | `True` | These names match the authoritative "Toggle Env Var" column in the README MCP tools table (condensed action-routed surface). |
-| `SOURCE_CREDENTIALS` | `{"x":{"type":"cookie_session","secret":"vault://pulselink/x/session"},"reddit":{"type":"oauth2","secret":"vault://pulselink/reddit/token","token_url":"https://www.reddit.com/api/v1/access_token","client_id":"<id>","client_secret_secret":"vault://pulselink/reddit/cs"},"github":{"type":"api_key","secret":"env://GITHUB_TOKEN","prefix":"token "},"exa":{"type":"api_key","secret":"env://EXA_API_KEY","prefix":""}}` | Keyless sources (youtube, web, rss, news, hackernews, v2ex, bilibili) need NOTHING here. Auth-laddered sources light up their higher-fidelity backend when a credential is set. SOURCE_CREDENTIALS is a JSON object mapping a source -> credential descriptor; secret values are URI refs resolved via the secrets backend (vault://, env://, sqlite://). Example: |
+| `SOURCE_CREDENTIALS` | `{"x":{"type":"cookie_session","secret":"vault://pulselink/x/session"},"reddit":{"type":"oauth2","secret":"vault://pulselink/reddit/token","token_url":"https://www.reddit.com/api/v1/access_token","client_id":"<id>","client_secret_secret":"vault://pulselink/reddit/cs"},"github":{"type":"api_key","secret":"env://GITHUB_TOKEN","prefix":"token "},"exa":{"type":"api_key","secret":"env://EXA_API_KEY","prefix":""}}` | Keyless sources (youtube, web, rss, news, hackernews, v2ex, bilibili) need NOTHING here. Auth-laddered sources light up their higher-fidelity backend when a credential is set. SOURCE_CREDENTIALS is a JSON object mapping a source -> credential descriptor; secret values are URI refs resolved via the injected secrets backend (vault://, env://). Example: |
 
 #### Inherited agent-utilities variables (apply to every connector)
 
@@ -237,7 +243,7 @@ _6 action-routed tool(s) · 6 verbose 1:1 tool(s). Each is enabled unless its `<
 | `MODEL_ID` | `gpt-4o` | Model id for the agent |
 | `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
-_19 package + 16 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
+_25 package + 16 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
 
 

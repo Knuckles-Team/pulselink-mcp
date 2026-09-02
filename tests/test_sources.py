@@ -10,9 +10,7 @@ import pytest
 
 from pulselink_mcp.sources import (
     CapabilityUnsupported,
-    doctor,
-    get_ladder,
-    list_sources,
+    build_registry,
 )
 from pulselink_mcp.sources import base as base_mod
 from pulselink_mcp.sources.base import (
@@ -20,7 +18,6 @@ from pulselink_mcp.sources.base import (
     PulseResult,
     SourceBackend,
     SourceLadder,
-    set_credential_provider,
 )
 from pulselink_mcp.sources.dev import GitHubPublicBackend, GitHubTokenBackend
 from pulselink_mcp.sources.forums import (
@@ -105,20 +102,13 @@ def captured_get(monkeypatch):
     return calls, calls_resp
 
 
-@pytest.fixture(autouse=True)
-def _reset_provider():
-    set_credential_provider(None)
-    yield
-    set_credential_provider(None)
-
-
 # --------------------------------------------------------------------------- #
 # Registry + doctor
 # --------------------------------------------------------------------------- #
 
 
 def test_registry_has_full_channel_parity():
-    sources = set(list_sources())
+    sources = set(build_registry(FakeProvider({})))
     expected = {
         "youtube",
         "web",
@@ -140,8 +130,8 @@ def test_registry_has_full_channel_parity():
 
 
 def test_doctor_keyless_ready_auth_dark_without_creds():
-    set_credential_provider(FakeProvider({}))  # no creds held
-    health = doctor()
+    registry = build_registry(FakeProvider({}))
+    health = {name: ladder.health() for name, ladder in registry.items()}
     yt = {h.backend: h for h in health["youtube"]}
     assert yt["yt-dlp"].ok and not yt["yt-dlp"].needs_auth
     x = {h.backend: h for h in health["x"]}
@@ -152,8 +142,8 @@ def test_doctor_keyless_ready_auth_dark_without_creds():
 
 
 def test_doctor_auth_backend_lights_up_with_credential():
-    set_credential_provider(FakeProvider({"x": FakeMaterial(headers={"a": "b"})}))
-    health = {h.backend: h for h in doctor()["x"]}
+    registry = build_registry(FakeProvider({"x": FakeMaterial(headers={"a": "b"})}))
+    health = {item.backend: item for item in registry["x"].health()}
     assert health["x-api"].ok and not health["x-api"].needs_auth
 
 
@@ -180,7 +170,7 @@ def test_hackernews_search_parses_and_paginates(captured_get):
             "nbPages": 3,
         }
     )
-    result = HackerNewsBackend().search("rust", cursor=None, limit=10)
+    result = HackerNewsBackend(FakeProvider({})).search("rust", cursor=None, limit=10)
     assert isinstance(result, PulseResult)
     assert result.documents[0].title == "Rust is great"
     assert result.documents[0].metrics["points"] == 42
@@ -202,7 +192,7 @@ def test_v2ex_list_parses(captured_get):
             }
         ]
     )
-    result = V2exBackend().list_items("hot", None, 10)
+    result = V2exBackend(FakeProvider({})).list_items("hot", None, 10)
     assert result.documents[0].author == "bob"
     assert result.documents[0].extra["node"] == "python"
 
@@ -224,7 +214,7 @@ def test_github_public_search_parses(captured_get):
             ]
         }
     )
-    result = GitHubPublicBackend().search("kernel", None, 10)
+    result = GitHubPublicBackend(FakeProvider({})).search("kernel", None, 10)
     assert result.documents[0].title == "torvalds/linux"
     assert result.documents[0].metrics["stars"] == 100
 
@@ -237,10 +227,10 @@ def test_github_public_search_parses(captured_get):
 def test_auth_material_applied_to_request(captured_get):
     calls, resp = captured_get
     resp["resp"] = FakeResp({"items": []})
-    set_credential_provider(
-        FakeProvider({"github": FakeMaterial(headers={"Authorization": "token GH"})})
+    provider = FakeProvider(
+        {"github": FakeMaterial(headers={"Authorization": "token GH"})}
     )
-    GitHubTokenBackend().search("x", None, 5)
+    GitHubTokenBackend(provider).search("x", None, 5)
     # The credential's header reached the outbound request.
     assert calls[-1]["headers"]["Authorization"] == "token GH"
     assert calls[-1]["headers"]["User-Agent"]  # default UA still present
@@ -249,20 +239,20 @@ def test_auth_material_applied_to_request(captured_get):
 def test_keyless_backend_sends_no_auth_header(captured_get):
     calls, resp = captured_get
     resp["resp"] = FakeResp({"items": []})
-    set_credential_provider(
-        FakeProvider({"github": FakeMaterial(headers={"Authorization": "token GH"})})
+    provider = FakeProvider(
+        {"github": FakeMaterial(headers={"Authorization": "token GH"})}
     )
-    GitHubPublicBackend().search("x", None, 5)  # keyless variant
+    GitHubPublicBackend(provider).search("x", None, 5)  # keyless variant
     assert "Authorization" not in calls[-1]["headers"]
 
 
 def test_ladder_selects_auth_backend_when_credential_present(captured_get):
     calls, resp = captured_get
     resp["resp"] = FakeResp({"data": {"children": [], "after": None}})
-    set_credential_provider(
+    registry = build_registry(
         FakeProvider({"reddit": FakeMaterial(headers={"Authorization": "Bearer R"})})
     )
-    get_ladder("reddit").search("python", None, 5)
+    registry["reddit"].search("python", None, 5)
     # The OAuth backend (higher in the ladder) ran → hit oauth.reddit.com.
     assert any("oauth.reddit.com" in c["url"] for c in calls)
 
@@ -270,14 +260,15 @@ def test_ladder_selects_auth_backend_when_credential_present(captured_get):
 def test_ladder_falls_back_to_keyless_without_credential(captured_get):
     calls, resp = captured_get
     resp["resp"] = FakeResp({"data": {"children": [], "after": None}})
-    set_credential_provider(FakeProvider({}))  # no reddit credential
-    get_ladder("reddit").search("python", None, 5)
+    build_registry(FakeProvider({}))["reddit"].search("python", None, 5)
     # Only the public (www) endpoint was hit; oauth backend was ineligible.
     assert all("oauth.reddit.com" not in c["url"] for c in calls)
     assert any("www.reddit.com" in c["url"] for c in calls)
 
 
 def test_ladder_falls_through_on_backend_error():
+    provider = FakeProvider({})
+
     class Boom(SourceBackend):
         name = "boom"
 
@@ -290,30 +281,34 @@ def test_ladder_falls_through_on_backend_error():
         def search(self, query, cursor, limit):
             return PulseResult(documents=[PulseDocument(id="ok")])
 
-    ladder = SourceLadder("test", [Boom(), Works()])
+    ladder = SourceLadder("test", [Boom(provider), Works(provider)], provider)
     result = ladder.search("q", None, 5)
     assert result.documents[0].id == "ok"
     assert result.backend == "works"
 
 
 def test_unsupported_capability_raises():
+    provider = FakeProvider({})
+
     class OnlySearch(SourceBackend):
         name = "s"
 
         def search(self, query, cursor, limit):
             return PulseResult()
 
-    ladder = SourceLadder("test", [OnlySearch()])
+    ladder = SourceLadder("test", [OnlySearch(provider)], provider)
     with pytest.raises(RuntimeError):
         ladder.fetch("x")  # no backend supports fetch → all-fail RuntimeError
 
 
 def test_capability_unsupported_is_distinct_type():
-    backend = RedditPublicBackend()
+    backend = RedditPublicBackend(FakeProvider({}))
     with pytest.raises(CapabilityUnsupported):
         backend.transcribe("x")  # reddit has no transcribe
 
 
 def test_unknown_source_raises_keyerror():
+    from pulselink_mcp.api import PulseLinkClient
+
     with pytest.raises(KeyError):
-        get_ladder("myspace")
+        PulseLinkClient(FakeProvider({})).search("myspace", "query")

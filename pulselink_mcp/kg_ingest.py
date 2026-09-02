@@ -167,9 +167,7 @@ def _map_one_document(
     doc_id = f"pulselink:document:{source}:{ext}"
 
     nodes = [_document_node(source, doc_id, ext, text, d)]
-    relationships = [
-        {"source": doc_id, "target": src_id, "relationship": "fromSource"}
-    ]
+    relationships = [{"source": doc_id, "target": src_id, "relationship": "fromSource"}]
 
     entity_nodes, entity_edges = _document_entity_nodes(d, doc_id, seen_entities)
     nodes.extend(entity_nodes)
