@@ -66,8 +66,8 @@ services:
       - HOST=0.0.0.0
       - PORT=9000
       - MCP_URL=http://pulselink-mcp-mcp:8000/mcp
-      - PROVIDER=${PROVIDER:-openai}
-      - MODEL_ID=${MODEL_ID:-gpt-4o}
+      - PROVIDER=${PROVIDER:?set-PROVIDER-to-a-configured-model-provider}
+      - MODEL_ID=${MODEL_ID:?set-MODEL_ID-to-a-configured-model-capability}
       - ENABLE_WEB_UI=True
       - ENABLE_OTEL=True
     ports:

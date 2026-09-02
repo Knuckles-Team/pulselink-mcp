@@ -52,7 +52,6 @@ This repository is actively maintained - Contributions are welcome!
         "MCP_TOOL_MODE": "intent",
         "PULSETOOL": "True",
         "XAI_BASE_URL": "https://api.x.ai/v1",
-        "XAI_SEARCH_MODEL": "grok-4.3",
         "XAI_SEARCH_RETRIES": "2",
         "XAI_SEARCH_TIMEOUT_SECONDS": "180"
       }
@@ -88,7 +87,6 @@ own runtime secret boundary.
         "MCP_TOOL_MODE": "intent",
         "PULSETOOL": "True",
         "XAI_BASE_URL": "https://api.x.ai/v1",
-        "XAI_SEARCH_MODEL": "grok-4.3",
         "XAI_SEARCH_RETRIES": "2",
         "XAI_SEARCH_TIMEOUT_SECONDS": "180"
       }
@@ -123,7 +121,6 @@ docker run -i --rm \
   -e MCP_TOOL_MODE=intent \
   -e PULSETOOL=True \
   -e XAI_BASE_URL=https://api.x.ai/v1 \
-  -e XAI_SEARCH_MODEL=grok-4.3 \
   -e XAI_SEARCH_RETRIES=2 \
   -e XAI_SEARCH_TIMEOUT_SECONDS=180 \
   registry.example.invalid/pulselink-mcp@sha256:<digest> pulselink-mcp
@@ -216,9 +213,11 @@ _6 action-routed tool(s) · 6 verbose 1:1 tool(s). Each is enabled unless its `<
 | `EUNOMIA_POLICY_FILE` | `mcp_policies.json` |  |
 | `EUNOMIA_REMOTE_URL` | `http://eunomia-server:8000` |  |
 | `XAI_BASE_URL` | `https://api.x.ai/v1` | xAI API base URL |
-| `XAI_SEARCH_MODEL` | `grok-4.3` | model used for X live search |
+| `XAI_SEARCH_MODEL` | — | required only when X live search is used |
 | `XAI_SEARCH_TIMEOUT_SECONDS` | `180` | per-request timeout (seconds) |
 | `XAI_SEARCH_RETRIES` | `2` | retry attempts on failure |
+| `PROVIDER` | — | operator-selected model provider |
+| `MODEL_ID` | — | operator-selected model capability |
 | `PULSETOOL` | `True` | These names match the authoritative "Toggle Env Var" column in the README MCP tools table (condensed action-routed surface). |
 | `SOURCE_CREDENTIALS` | `{"x":{"type":"cookie_session","secret":"vault://pulselink/x/session"},"reddit":{"type":"oauth2","secret":"vault://pulselink/reddit/token","token_url":"https://www.reddit.com/api/v1/access_token","client_id":"<id>","client_secret_secret":"vault://pulselink/reddit/cs"},"github":{"type":"api_key","secret":"env://GITHUB_TOKEN","prefix":"token "},"exa":{"type":"api_key","secret":"env://EXA_API_KEY","prefix":""}}` | Keyless sources (youtube, web, rss, news, hackernews, v2ex, bilibili) need NOTHING here. Auth-laddered sources light up their higher-fidelity backend when a credential is set. SOURCE_CREDENTIALS is a JSON object mapping a source -> credential descriptor; secret values are URI refs resolved via the injected secrets backend (vault://, env://). Example: |
 
@@ -239,11 +238,9 @@ _6 action-routed tool(s) · 6 verbose 1:1 tool(s). Each is enabled unless its `<
 | `DEBUG` | `False` | Verbose logging |
 | `PYTHONUNBUFFERED` | `1` | Unbuffered stdout (recommended in containers) |
 | `MCP_URL` | `http://localhost:8000/mcp` | URL of the MCP server the agent connects to |
-| `PROVIDER` | `openai` | LLM provider for the agent |
-| `MODEL_ID` | `gpt-4o` | Model id for the agent |
 | `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
-_25 package + 16 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
+_27 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
 
 
@@ -262,12 +259,13 @@ Every variable the server reads.
 | `PYTHONUNBUFFERED` | Unbuffered stdout (recommended in containers) | `1` |
 
 ### X / xAI Live Search (optional)
-Used by the X source backend; all optional with sensible defaults.
+Used only by the optional X live-search capability. Its model identifier is
+operator-supplied; keyless and non-model source paths do not require it.
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `XAI_BASE_URL` | xAI API base URL | `https://api.x.ai/v1` |
-| `XAI_SEARCH_MODEL` | Model used for X live search | `grok-4.3` |
+| `XAI_SEARCH_MODEL` | Operator-selected model used for X live search | required for this capability |
 | `XAI_SEARCH_TIMEOUT_SECONDS` | Per-request timeout (seconds) | `180` |
 | `XAI_SEARCH_RETRIES` | Retry attempts on failure | `2` |
 
@@ -299,8 +297,8 @@ The full list is in the [Available MCP Tools](#available-mcp-tools) table above.
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `MCP_URL` | URL of the MCP server the agent connects to | `http://localhost:8000/mcp` |
-| `PROVIDER` | LLM provider (e.g. `openai`) | `openai` |
-| `MODEL_ID` | Model id (e.g. `gpt-4o`) | `gpt-4o` |
+| `PROVIDER` | Operator-selected model provider | required |
+| `MODEL_ID` | Operator-selected model capability | required |
 | `ENABLE_WEB_UI` | Serve the AG-UI web interface | `True` |
 
 See [`.env.example`](.env.example) for a copy-paste starting point.

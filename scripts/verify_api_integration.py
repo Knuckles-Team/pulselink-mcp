@@ -5,6 +5,8 @@ import os
 import sys
 from typing import TypeGuard
 
+import tomllib
+
 BASELINES = {
     "adguard-home-agent": 89.2,
     "ansible-tower-mcp": 94.7,
@@ -23,12 +25,24 @@ BASELINES = {
     "plane-agent": 54.9,
     "portainer-agent": 35.5,
     "postiz-agent": 0.0,
+    "pulselink-mcp": 83.3,
     "qbittorrent-agent": 70.8,
     "scholarx": 90.0,
     "servicenow-api": 73.1,
     "stirlingpdf-agent": 0.0,
     "wger-agent": 41.7,
 }
+
+
+def _canonical_project_name(project_dir: str) -> str:
+    pyproject_path = os.path.join(project_dir, "pyproject.toml")
+    try:
+        with open(pyproject_path, "rb") as stream:
+            project = tomllib.load(stream).get("project", {})
+    except (OSError, tomllib.TOMLDecodeError):
+        return os.path.basename(os.path.abspath(project_dir))
+    name = project.get("name")
+    return name if isinstance(name, str) and name else os.path.basename(project_dir)
 
 
 def _is_api_client_class(node: ast.ClassDef) -> bool:
@@ -188,9 +202,9 @@ def verify_agent(agent_dir):
     unmapped = set(api_methods.keys()) - mapped_methods
 
     return {
-        "agent_name": os.path.basename(agent_dir),
-        "api_client": api_clients,
-        "mcp_server": sorted(set(mcp_servers + mcp_tool_modules)),
+        "agent_name": _canonical_project_name(agent_dir),
+        "api_client": api_clients[0],
+        "mcp_server": mcp_servers[0],
         "api_methods": sorted(api_methods),
         "total_methods": total_methods,
         "covered_methods": covered_methods,
@@ -211,9 +225,16 @@ def _print_local_report(res, baseline) -> None:
 
 
 def _run_local_mode(cwd: str) -> None:
+    project_name = _canonical_project_name(cwd)
     res = verify_agent(cwd)
     if not res:
-        # If no client or server found in this dir, pass silently (e.g. non-python files, doc edits)
+        if project_name == "pulselink-mcp":
+            print(
+                "PulseLink integration inventory is missing its API client or MCP server",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        # Packages without an API/MCP surface are outside this verifier.
         print(
             "Skipping integration parity verification: No mcp_server.py/api_client.py found in current directory."
         )
@@ -227,20 +248,27 @@ def _run_local_mode(cwd: str) -> None:
     )
     pulselink_package = os.path.join(cwd, "pulselink_mcp")
     if os.path.isdir(pulselink_package) and not os.path.exists(pulselink_client):
-        raise RuntimeError("PulseLink API inventory module is missing")
+        print("PulseLink API inventory module is missing", file=sys.stderr)
+        sys.exit(1)
     if os.path.exists(pulselink_client):
         pulse_methods = parse_api_client(pulselink_client)
         expected = {"fetch", "list_items", "search", "sources", "status", "transcribe"}
         missing = expected - set(pulse_methods)
         if missing:
-            raise RuntimeError(
-                "PulseLink API inventory is incomplete: " + ", ".join(sorted(missing))
+            print(
+                "PulseLink API inventory is incomplete: " + ", ".join(sorted(missing)),
+                file=sys.stderr,
             )
+            sys.exit(1)
 
     agent_name = res["agent_name"]
     coverage = res["coverage"]
     baseline = BASELINES.get(agent_name, 0.0)
     _print_local_report(res, baseline)
+
+    if agent_name == "pulselink-mcp" and res["covered_methods"] == 0:
+        print("\n❌ FAILED: PulseLink has zero mapped MCP methods", file=sys.stderr)
+        sys.exit(1)
 
     # Allow small floating point tolerance (0.05%)
     if coverage < (baseline - 0.05):

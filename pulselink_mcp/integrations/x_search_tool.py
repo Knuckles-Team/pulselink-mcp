@@ -39,7 +39,6 @@ logger = logging.getLogger(__name__)
 
 # Constants
 DEFAULT_XAI_BASE_URL = "https://api.x.ai/v1"
-DEFAULT_X_SEARCH_MODEL = "grok-4.3"
 DEFAULT_X_SEARCH_TIMEOUT_SECONDS = 180
 DEFAULT_X_SEARCH_RETRIES = 2
 MAX_HANDLES = 10
@@ -168,9 +167,11 @@ def _resolve_xai_search_config(ctx: RunContext[AgentDeps]) -> _XaiSearchConfig:
         .strip()
         .rstrip("/")
     )
-    model = str(
-        xai_config.get("model") or setting("XAI_SEARCH_MODEL", DEFAULT_X_SEARCH_MODEL)
-    ).strip()
+    model = str(xai_config.get("model") or setting("XAI_SEARCH_MODEL", "")).strip()
+    if not model:
+        raise RuntimeError(
+            "XAI_SEARCH_MODEL must be configured to use the X live-search capability"
+        )
     timeout_val = xai_config.get("timeout_seconds") or setting(
         "XAI_SEARCH_TIMEOUT_SECONDS", DEFAULT_X_SEARCH_TIMEOUT_SECONDS
     )

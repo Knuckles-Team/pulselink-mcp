@@ -12,6 +12,7 @@ from pydantic_ai import RunContext
 from pulselink_mcp.integrations.x_search_tool import (
     _normalize_handles,
     _parse_iso_date,
+    _resolve_xai_search_config,
     _validate_date_range,
     browse_x_post,
     x_search,
@@ -49,6 +50,17 @@ class TestXSearchToolHelpers:
             _validate_date_range("2026-05-21", "2026-05-01")
         assert "must be on or before" in str(exc_info.value)
 
+    def test_x_search_model_is_required_only_when_capability_is_resolved(
+        self, monkeypatch
+    ):
+        monkeypatch.delenv("XAI_SEARCH_MODEL", raising=False)
+        ctx = MagicMock(spec=RunContext)
+        ctx.deps = MagicMock()
+        ctx.deps.config = {}
+
+        with pytest.raises(RuntimeError, match="XAI_SEARCH_MODEL must be configured"):
+            _resolve_xai_search_config(ctx)
+
 
 class TestXSearchToolsExecution:
     """Tests for tools execution logic under simulated run context."""
@@ -57,6 +69,7 @@ class TestXSearchToolsExecution:
     def mock_context(self):
         ctx = MagicMock(spec=RunContext)
         ctx.deps = MagicMock()
+        ctx.deps.config = {"xai": {"model": "configured-x-search-capability"}}
         return ctx
 
     @patch(_AUTH)
