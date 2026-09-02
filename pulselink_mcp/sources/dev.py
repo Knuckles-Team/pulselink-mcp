@@ -5,7 +5,8 @@ CONCEPT:PK-OS.governance.developer-semantic-search-sources — Developer & seman
 
 from __future__ import annotations
 
-from .base import PulseDocument, PulseResult, SourceBackend, configured_session
+from .base import PulseDocument, PulseResult, SourceBackend
+from .http_transport import configured_session
 
 
 class GitHubPublicBackend(SourceBackend):

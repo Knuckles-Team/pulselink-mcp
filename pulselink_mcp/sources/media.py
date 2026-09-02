@@ -10,8 +10,8 @@ from .base import (
     PulseDocument,
     PulseResult,
     SourceBackend,
-    configured_session,
 )
+from .http_transport import configured_session
 
 
 class YouTubeBackend(SourceBackend):

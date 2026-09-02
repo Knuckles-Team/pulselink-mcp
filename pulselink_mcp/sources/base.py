@@ -21,119 +21,23 @@ provider (OS-5.38/5.39) rather than ad-hoc per-source secret reads.
 
 from __future__ import annotations
 
-import atexit
 import logging
-from typing import Any, Protocol
+from typing import Any
 
-import requests
-from agent_utilities.core.transport_security import (
-    ResolvedTLSProfile,
-    resolve_configured_tls_profile,
+from .contracts import (
+    BackendHealth,
+    CapabilityUnsupported,
+    CredentialAuthorityUnavailable,
+    CredentialProvider,
+    PulseDocument,
+    PulseResult,
 )
-from pydantic import BaseModel, Field
+from .http_transport import AuthenticatedHttpTransport
 
 logger = logging.getLogger("pulselink.sources")
 
-# Sent on every outbound request so endpoints that sniff a default urllib/requests
-# UA (and 403/412 it) see a normal browser string.
-DEFAULT_UA = (
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
-)
-DEFAULT_TIMEOUT = 20
 
-
-class CapabilityUnsupported(RuntimeError):
-    """Raised when a backend does not implement a requested capability."""
-
-
-class CredentialAuthorityUnavailable(RuntimeError):
-    """Raised when source composition omitted credential authority."""
-
-
-class CredentialProvider(Protocol):
-    """Minimal injected credential authority consumed by source ladders."""
-
-    def available(self, source: str) -> bool: ...
-
-    def get(self, source: str) -> Any: ...
-
-
-class UnavailableCredentialProvider:
-    """Fail-closed authority used only for schema/help construction."""
-
-    def available(self, source: str) -> bool:
-        return False
-
-    def get(self, source: str) -> Any:
-        raise CredentialAuthorityUnavailable(
-            f"credential authority is unavailable for source {source!r}"
-        )
-
-
-class PulseDocument(BaseModel):
-    """One normalized item returned to the agent / KG ingestion pipeline.
-
-    The field set is deliberately flat and stable so the agent-utilities
-    ``mcp_tool`` connector presets (KG-2.59) can map it declaratively.
-    """
-
-    id: str
-    source: str = ""
-    title: str = ""
-    url: str = ""
-    text: str = ""
-    author: str = ""
-    created_at: str = ""
-    metrics: dict[str, Any] = Field(default_factory=dict)
-    extra: dict[str, Any] = Field(default_factory=dict)
-
-
-class PulseResult(BaseModel):
-    """A page of documents plus an opaque cursor for the next page."""
-
-    documents: list[PulseDocument] = Field(default_factory=list)
-    next_cursor: str | None = None
-    backend: str = ""
-
-
-class BackendHealth(BaseModel):
-    """The doctor verdict for one backend of one source."""
-
-    backend: str
-    ok: bool
-    needs_auth: bool = False
-    detail: str = ""
-
-
-_HTTP_SESSION: requests.Session | None = None
-_TLS_PROFILE: ResolvedTLSProfile | None = None
-
-
-def configured_session() -> requests.Session:
-    """Return the process-wide Requests session under the AgentConfig TLS policy."""
-    global _HTTP_SESSION, _TLS_PROFILE
-    if _HTTP_SESSION is None:
-        _TLS_PROFILE = resolve_configured_tls_profile("pulselink")
-        _HTTP_SESSION = _TLS_PROFILE.configure_requests_session(requests.Session())
-    return _HTTP_SESSION
-
-
-def close_configured_session() -> None:
-    """Release the shared session and runtime-only TLS material."""
-    global _HTTP_SESSION, _TLS_PROFILE
-    if _HTTP_SESSION is not None:
-        _HTTP_SESSION.close()
-    if _TLS_PROFILE is not None:
-        _TLS_PROFILE.cleanup()
-    _HTTP_SESSION = None
-    _TLS_PROFILE = None
-
-
-atexit.register(close_configured_session)
-
-
-class SourceBackend:
+class SourceBackend(AuthenticatedHttpTransport):
     """One way to reach a source's content.
 
     Subclasses set :attr:`name` and (for auth backends) :attr:`requires_credential`
@@ -151,7 +55,7 @@ class SourceBackend:
             raise CredentialAuthorityUnavailable(
                 "source backend requires injected credential authority"
             )
-        self._credential_provider = credential_provider
+        super().__init__(credential_provider, self.requires_credential)
 
     # -- eligibility / health ------------------------------------------------
     def is_eligible(self, provider: Any) -> bool:
@@ -172,46 +76,6 @@ class SourceBackend:
                 detail=f"needs credential for '{self.requires_credential}'",
             )
         return BackendHealth(backend=self.name, ok=True, detail="ready")
-
-    # -- shared HTTP with unified auth ---------------------------------------
-    def _auth(
-        self,
-        headers: dict[str, str] | None = None,
-        params: dict[str, str] | None = None,
-        cookies: dict[str, str] | None = None,
-    ) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
-        """Merge this backend's credential material onto a request's pieces."""
-        base_headers = {"User-Agent": DEFAULT_UA, **(headers or {})}
-        if self.requires_credential is None:
-            return base_headers, dict(params or {}), dict(cookies or {})
-        material = self._credential_provider.get(self.requires_credential).materialize()
-        return material.merged_into(base_headers, params, cookies)
-
-    def get(
-        self,
-        url: str,
-        *,
-        params: dict[str, str] | None = None,
-        headers: dict[str, str] | None = None,
-        timeout: int = DEFAULT_TIMEOUT,
-    ) -> requests.Response:
-        """Authenticated GET applying this backend's credential material."""
-        h, p, c = self._auth(headers, params)
-        resp = configured_session().get(
-            url,
-            params=p,
-            headers=h,
-            cookies=c,
-            timeout=timeout,
-        )
-        resp.raise_for_status()
-        return resp
-
-    def get_json(self, url: str, **kw: Any) -> Any:
-        return self.get(url, **kw).json()
-
-    def get_text(self, url: str, **kw: Any) -> str:
-        return self.get(url, **kw).text
 
     # -- capabilities (override the ones a backend supports) -----------------
     def search(self, query: str, cursor: str | None, limit: int) -> PulseResult:

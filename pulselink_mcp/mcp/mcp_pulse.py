@@ -17,6 +17,7 @@ from pydantic import Field
 
 from ..api import PulseLinkClient
 from ..sources import SOURCE_NAMES
+from ..sources.base import CredentialAuthorityUnavailable
 
 logger = logging.getLogger("pulselink_mcp.mcp")
 
@@ -61,6 +62,8 @@ def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
             )
             await asyncio.to_thread(_maybe_ingest, source, result)
             return result
+        except CredentialAuthorityUnavailable:
+            raise
         except Exception:  # noqa: BLE001 — surface as a tool error, not a crash
             return {"error": "Operation failed", "source": source}
 
@@ -77,6 +80,8 @@ def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
             result = await asyncio.to_thread(client.fetch, source, target)
             await asyncio.to_thread(_maybe_ingest, source, result)
             return result
+        except CredentialAuthorityUnavailable:
+            raise
         except Exception:  # noqa: BLE001
             return {"error": "Operation failed", "source": source}
 
@@ -100,6 +105,8 @@ def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
             )
             await asyncio.to_thread(_maybe_ingest, source, result)
             return result
+        except CredentialAuthorityUnavailable:
+            raise
         except Exception:  # noqa: BLE001
             return {"error": "Operation failed", "source": source}
 
@@ -117,6 +124,8 @@ def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
             await ctx.info(f"pulse_transcribe source={source!r} target={target!r}")
         try:
             return await asyncio.to_thread(client.transcribe, target, source)
+        except CredentialAuthorityUnavailable:
+            raise
         except Exception:  # noqa: BLE001
             return {"error": "Operation failed", "source": source}
 
@@ -160,6 +169,8 @@ def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
                 result = await asyncio.to_thread(
                     client.search, source, query, None, limit
                 )
+        except CredentialAuthorityUnavailable:
+            raise
         except Exception:  # noqa: BLE001
             return {"error": "Operation failed", "source": source}
 

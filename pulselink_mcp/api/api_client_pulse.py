@@ -3,8 +3,7 @@
 CONCEPT:PK-OS.governance.search-fetch-list-transcribe — the single object the MCP server and agent use. Unlike a
 classic single-endpoint API client, PulseLink fans out across many source ladders
 and authenticates per-source through the shared credential provider, so there is no
-base URL / token here — :func:`pulselink_mcp.auth.get_client` constructs it with no
-configuration and every keyless source works immediately.
+base URL or token here; the composition root supplies its credential authority.
 """
 
 from __future__ import annotations
@@ -12,16 +11,33 @@ from __future__ import annotations
 from typing import Any
 
 from ..sources import build_registry
-from ..sources.base import CredentialProvider, SourceLadder
+from ..sources.base import (
+    CredentialAuthorityUnavailable,
+    CredentialProvider,
+    SourceLadder,
+)
 
 
 class PulseLinkClient:
     """Thin facade delegating to the source registry."""
 
-    def __init__(self, credential_provider: CredentialProvider) -> None:
+    def __init__(
+        self,
+        credential_provider: CredentialProvider,
+        *,
+        runtime_authority: bool = True,
+    ) -> None:
         self._sources = build_registry(credential_provider)
+        self._runtime_authority = runtime_authority
+
+    def _require_runtime_authority(self) -> None:
+        if not self._runtime_authority:
+            raise CredentialAuthorityUnavailable(
+                "PulseLink runtime credential authority is unavailable"
+            )
 
     def _ladder(self, source: str) -> SourceLadder:
+        self._require_runtime_authority()
         ladder = self._sources.get(source)
         if ladder is None:
             raise KeyError(
@@ -50,6 +66,7 @@ class PulseLinkClient:
         return self._ladder(source).transcribe(target).model_dump()
 
     def status(self) -> dict[str, list[dict[str, Any]]]:
+        self._require_runtime_authority()
         return {
             name: [h.model_dump() for h in backends]
             for name, backends in (

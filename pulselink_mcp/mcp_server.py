@@ -2,7 +2,7 @@
 
 import logging
 import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from agent_utilities.base_utilities import get_logger
 from agent_utilities.core.config import load_config
@@ -11,9 +11,12 @@ from agent_utilities.mcp.verbose_tools import register_tool_surface
 
 from pulselink_mcp.api import PulseLinkClient
 from pulselink_mcp.auth import create_client
-from pulselink_mcp.sources.base import UnavailableCredentialProvider
+from pulselink_mcp.sources.contracts import UnavailableCredentialProvider
 
 from .mcp import register_pulse_tools
+
+if TYPE_CHECKING:
+    from agent_utilities.security.secrets_client import SecretsClient
 
 __version__ = "2.1.0"
 
@@ -21,15 +24,9 @@ logger = get_logger(name="MCP_Server")
 logger.setLevel(logging.INFO)
 
 
-def get_mcp_instance(*, secrets_client: Any = None) -> tuple[Any, Any, Any]:
-    """Initialize PulseLink from explicitly injected encrypted-secret authority."""
+def _build_mcp(client: PulseLinkClient) -> tuple[Any, Any, Any]:
+    """Register one already-composed client on a new MCP surface."""
     load_config()
-    client = (
-        PulseLinkClient(UnavailableCredentialProvider())
-        if secrets_client is None
-        else create_client(secrets_client)
-    )
-
     args, mcp, middlewares = create_mcp_server(
         name="PulseLink MCP",
         version=__version__,
@@ -56,6 +53,23 @@ def get_mcp_instance(*, secrets_client: Any = None) -> tuple[Any, Any, Any]:
     return mcp, args, middlewares
 
 
+def get_mcp_instance() -> tuple[Any, Any, Any]:
+    """Build the non-executable schema surface used by fleet introspection."""
+    client = PulseLinkClient(
+        UnavailableCredentialProvider(),
+        runtime_authority=False,
+    )
+    return _build_mcp(client)
+
+
+def get_runtime_mcp_instance(
+    *,
+    secrets_client: SecretsClient,
+) -> tuple[Any, Any, Any]:
+    """Build an executable surface from explicit encrypted-secret authority."""
+    return _build_mcp(create_client(secrets_client))
+
+
 def mcp_server():
     if any(argument in {"-h", "--help"} for argument in sys.argv[1:]):
         get_mcp_instance()
@@ -72,7 +86,7 @@ def mcp_server():
         backend_type="rust",
     )
     secrets_client = SecretsClient(InEpistemicGraphBackend(engine))
-    mcp, args, _ = get_mcp_instance(secrets_client=secrets_client)
+    mcp, args, _ = get_runtime_mcp_instance(secrets_client=secrets_client)
 
     print(f"PulseLink MCP v{__version__}", file=sys.stderr)
     print("\nStarting MCP Server", file=sys.stderr)

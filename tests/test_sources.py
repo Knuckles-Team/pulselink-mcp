@@ -12,7 +12,7 @@ from pulselink_mcp.sources import (
     CapabilityUnsupported,
     build_registry,
 )
-from pulselink_mcp.sources import base as base_mod
+from pulselink_mcp.sources import http_transport as http_transport_mod
 from pulselink_mcp.sources.base import (
     PulseDocument,
     PulseResult,
@@ -98,7 +98,11 @@ def captured_get(monkeypatch):
     class FakeSession:
         get = staticmethod(fake_get)
 
-    monkeypatch.setattr(base_mod, "configured_session", lambda: FakeSession())
+    monkeypatch.setattr(
+        http_transport_mod,
+        "configured_session",
+        lambda: FakeSession(),
+    )
     return calls, calls_resp
 
 
