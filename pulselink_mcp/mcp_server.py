@@ -10,6 +10,13 @@ from agent_utilities.core.config import load_config
 from agent_utilities.mcp.server_factory import create_mcp_server
 from agent_utilities.mcp.verbose_tools import register_tool_surface
 
+# A plain import of `secrets_client` is side-effect free (it only defines
+# classes); the eager cost this module works around is *constructing*
+# `InEpistemicGraphBackend`/`GraphComputeEngine`, not importing the module
+# that defines them. Imported for real (not under TYPE_CHECKING) so
+# `_LazyEpistemicGraphBackend` can genuinely subclass the ABC below.
+from agent_utilities.security.secrets_client import SecretsBackend
+
 from pulselink_mcp.api import PulseLinkClient
 from pulselink_mcp.auth import create_client
 from pulselink_mcp.sources.contracts import UnavailableCredentialAuthority
@@ -23,6 +30,50 @@ __version__ = "2.1.0"
 
 logger = get_logger(name="MCP_Server")
 logger.setLevel(logging.INFO)
+
+
+class _LazyEpistemicGraphBackend(SecretsBackend):
+    """Defer the local epistemic-graph engine connection to the first real
+    secret lookup, never to server startup.
+
+    ``mcp_server()`` used to build ``InEpistemicGraphBackend`` (and the
+    ``GraphComputeEngine`` it wraps) eagerly, before the MCP surface could
+    even answer ``tools/list`` -- so anything that only needs the tool
+    schema (connector-certify's own introspection included) required a live
+    local engine subprocess to be up first. PulseLink's tools only need a
+    real secret when a source actually authenticates; listing tools never
+    does.
+    """
+
+    def __init__(self) -> None:
+        self._backend: SecretsBackend | None = None
+
+    def _resolve(self) -> SecretsBackend:
+        if self._backend is None:
+            from agent_utilities.knowledge_graph.core.graph_compute import (
+                GraphComputeEngine,
+            )
+            from agent_utilities.security.secrets_client import (
+                InEpistemicGraphBackend,
+            )
+
+            engine = GraphComputeEngine.get_or_create(
+                graph_name="__secrets__", backend_type="rust"
+            )
+            self._backend = InEpistemicGraphBackend(engine)
+        return self._backend
+
+    def get(self, key: str) -> str | None:
+        return self._resolve().get(key)
+
+    def set(self, key: str, value: str, **metadata: Any) -> None:
+        self._resolve().set(key, value, **metadata)
+
+    def delete(self, key: str) -> bool:
+        return self._resolve().delete(key)
+
+    def list_keys(self) -> list[str]:
+        return self._resolve().list_keys()
 
 
 def _build_mcp(client: PulseLinkClient) -> tuple[Any, Any, Any]:
@@ -75,17 +126,12 @@ def mcp_server():
         get_mcp_instance()
         return
 
-    from agent_utilities.knowledge_graph.core.graph_compute import GraphComputeEngine
-    from agent_utilities.security.secrets_client import (
-        InEpistemicGraphBackend,
-        SecretsClient,
-    )
+    from agent_utilities.security.secrets_client import SecretsClient
 
-    engine = GraphComputeEngine.get_or_create(
-        graph_name="__secrets__",
-        backend_type="rust",
-    )
-    secrets_client = SecretsClient(InEpistemicGraphBackend(engine))
+    # Lazy: the local epistemic-graph engine only starts on the first real
+    # secret lookup a tool call makes, not here -- so building the MCP
+    # surface and answering `tools/list` never requires a live engine.
+    secrets_client = SecretsClient(_LazyEpistemicGraphBackend())
     mcp, args, _ = get_runtime_mcp_instance(secrets_client=secrets_client)
 
     print(f"PulseLink MCP v{__version__}", file=sys.stderr)
