@@ -41,7 +41,18 @@ def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
     if client is None:
         raise RuntimeError("pulse tools require an injected client")
 
-    @mcp.tool(tags={"pulse"})
+    @mcp.tool(
+        tags={"pulse"},
+        annotations={
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": True,
+        },
+        meta={
+            "eg.annotations": {"modalities_in": ["text"], "modalities_out": ["text"]}
+        },
+    )
     async def pulse_search(
         source: str = Field(
             description=f"Source to search. One of: {', '.join(SOURCE_NAMES)}."
