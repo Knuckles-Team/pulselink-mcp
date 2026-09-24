@@ -54,20 +54,10 @@ def test_model_default_detector_rejects_any_structural_fallback() -> None:
     assert _MODEL_SELECTION_DEFAULT.search(synthetic_compose) is not None
 
 
-def test_repository_requires_explicit_agent_model_capabilities() -> None:
-    documents = _repository_text()
-    defaults = {
-        path: match.group(0)
-        for path, content in documents.items()
-        if (match := _MODEL_SELECTION_DEFAULT.search(content)) is not None
-    }
-    compose = documents[Path("docker/agent.compose.yml")]
-    required = {
-        match.group("variable") for match in _EXPLICIT_MODEL_SELECTION.finditer(compose)
-    }
-
-    assert defaults == {}
-    assert required == {"PROVIDER", "MODEL_ID"}
+# agent_server + docker/agent.compose.yml were retired fleet-wide (operator
+# ruling): the PROVIDER/MODEL_ID model-selection surface this test verified
+# (no silent structural default; explicit-only via the agent compose file)
+# no longer exists in this repo, so the check was removed with it.
 
 
 def test_documented_model_selection_is_unset_until_operator_configuration() -> None:

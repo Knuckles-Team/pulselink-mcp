@@ -70,12 +70,5 @@ Store the real remote URL, outbound identity reference, and TLS-profile referenc
 ## Docker Compose
 
 ```bash
-docker compose -f docker/mcp.compose.yml up -d      # MCP server only
-docker compose -f docker/agent.compose.yml up -d    # MCP + agent
-```
-
-## Run the A2A agent server
-
-```bash
-pulselink-agent --mcp-config mcp_config.json --web
+docker compose -f docker/mcp.compose.yml up -d
 ```

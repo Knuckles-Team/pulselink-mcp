@@ -33,7 +33,6 @@ test = [
 
 [project.scripts]
 pulselink-mcp = "pulselink_mcp.mcp_server:mcp_server"
-pulselink-agent = "pulselink_mcp.agent_server:agent_server"
 
 [project.entry-points."agent_utilities.skill_providers"]
 pulselink-mcp = "pulselink_mcp.skills"

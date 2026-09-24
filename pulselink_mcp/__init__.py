@@ -10,7 +10,6 @@ CORE_MODULES = [
 ]
 
 OPTIONAL_MODULES = {
-    "pulselink_mcp.agent_server": "agent",
     "pulselink_mcp.mcp_server": "mcp",
 }
 
@@ -47,5 +46,9 @@ for module_name, extra_name in OPTIONAL_MODULES.items():
         globals()[f"_{extra_name.upper()}_AVAILABLE"] = True
     else:
         globals()[f"_{extra_name.upper()}_AVAILABLE"] = False
+
+# agent_server was retired fleet-wide (operator ruling); this connector has no
+# agent-runtime surface, so the flag is a permanent False rather than a probe.
+_AGENT_AVAILABLE = False
 
 __all__.extend(["_MCP_AVAILABLE", "_AGENT_AVAILABLE"])
