@@ -22,9 +22,9 @@ from datetime import UTC, date, datetime
 from typing import Any, NamedTuple
 
 import httpx
-from agent_utilities.core.config import setting
+from agent_connector_sdk.config import setting
+from agent_connector_sdk.tls.resolve import resolve_tls_profile
 from agent_utilities.core.http_client import create_http_client
-from agent_utilities.core.transport_security import resolve_configured_tls_profile
 from agent_utilities.harness.tracing import trace
 from agent_utilities.models import AgentDeps
 from agent_utilities.orchestration.resilience import (
@@ -251,7 +251,7 @@ async def _execute_x_search_request(
     """POST to xAI's ``/responses`` with resilience retry. Returns (data, error_message)."""
 
     def _post_once() -> dict[str, Any]:
-        profile = resolve_configured_tls_profile("model")
+        profile = resolve_tls_profile("model")
         try:
             with create_http_client(
                 timeout=float(timeout),
