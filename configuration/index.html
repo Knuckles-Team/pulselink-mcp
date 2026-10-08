@@ -874,7 +874,7 @@ installed package. Use the compact/intent-oriented tool surface for delegated
 agents; expose verbose per-operation tools only for explicit operator diagnostics.</p>
 <h2 id="runtime-values-and-secrets">Runtime values and secrets<a class="headerlink" href="#runtime-values-and-secrets" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Supply service endpoints, tenant identifiers, credentials, and model keys
+<li>Provide service endpoints, tenant identifiers, credentials, and model keys
   through environment variables or a mounted secret provider.</li>
 <li>Use non-personal agent aliases and opaque tenant/correlation identifiers.</li>
 <li>Keep developer directories, workstation names, and deployment hostnames out
@@ -915,7 +915,7 @@ references only.</p>
 <li>Validate the capability bundle and skill metadata against the installed tool
    schemas.</li>
 <li>Confirm required secrets are present without printing their values.</li>
-<li>Verify the complete TLS chain with certificate verification enabled.</li>
+<li>Check the complete TLS chain with certificate verification enabled.</li>
 <li>Exercise health/readiness and one least-privilege read operation.</li>
 <li>Confirm traces arrive under the expected opaque tenant/run identifiers and
    contain no captured content.</li>
