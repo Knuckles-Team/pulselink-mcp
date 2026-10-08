@@ -22,7 +22,7 @@ agents; expose verbose per-operation tools only for explicit operator diagnostic
 
 ## Runtime values and secrets
 
-- Supply service endpoints, tenant identifiers, credentials, and model keys
+- Provide service endpoints, tenant identifiers, credentials, and model keys
   through environment variables or a mounted secret provider.
 - Use non-personal agent aliases and opaque tenant/correlation identifiers.
 - Keep developer directories, workstation names, and deployment hostnames out
@@ -70,7 +70,7 @@ references only.
 1. Validate the capability bundle and skill metadata against the installed tool
    schemas.
 2. Confirm required secrets are present without printing their values.
-3. Verify the complete TLS chain with certificate verification enabled.
+3. Check the complete TLS chain with certificate verification enabled.
 4. Exercise health/readiness and one least-privilege read operation.
 5. Confirm traces arrive under the expected opaque tenant/run identifiers and
    contain no captured content.

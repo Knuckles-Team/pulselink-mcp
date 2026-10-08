@@ -1,7 +1,7 @@
 # Usage — API / CLI / MCP
 
 `pulselink-mcp` exposes the same capability three ways: as **MCP tools** an agent
-calls, as a **Python API** you import, and as a **CLI**.
+calls, as a **Python API** the operator import, and as a **CLI**.
 
 ## As an MCP server
 
