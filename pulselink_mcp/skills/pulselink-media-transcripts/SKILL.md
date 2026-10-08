@@ -2,7 +2,7 @@
 name: pulselink-media-transcripts
 skill_type: skill
 description: >-
-  Keyless video & audio research over the pulselink-mcp MCP server — search YouTube,
+  Keyless video and audio research over the pulselink-mcp MCP server — search YouTube,
   Bilibili and podcasts, and turn a video/episode into a text transcript (yt-dlp
   captions, Whisper fallback) with no API keys. Use when the agent must find talks on
   a topic, pull a video's metadata, or extract the spoken content of a YouTube video
