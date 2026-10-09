@@ -1,9 +1,9 @@
 """Native epistemic-graph ingestion for PulseLink records.
 
 CONCEPT:AU-KG.ingest.enterprise-source-extractor. Connector-specific mappers emit
-canonical node_type nodes and relationship edges. The required agent-utilities
-native-ingest primitive owns the transaction and raises NativeIngestError when the
-authoritative engine cannot commit.
+canonical node_type nodes and relationship edges through the
+``agent_connector_sdk.ingest`` knowledge-ingest facade, which owns the transaction
+and raises ``IngestError`` when the authoritative engine cannot commit.
 """
 
 from __future__ import annotations
@@ -11,68 +11,81 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from agent_connector_sdk.ingest import (
+    ChangeSet,
+    Entity,
+    IngestBinding,
+    IngestError,
+    KnowledgeIngest,
+    Relationship,
+    current_ingest,
+)
 from agent_utilities.knowledge_graph.enrichment.extractors.social import (
     extract_structured_entities,
     to_kg_rows,
 )
-from agent_utilities.knowledge_graph.memory.native_ingest import (
-    NativeIngestError,
-)
-from agent_utilities.knowledge_graph.memory.native_ingest import (
-    ingest_documents as _native_ingest_documents,
-)
-from agent_utilities.knowledge_graph.memory.native_ingest import (
-    ingest_entities as _native_ingest_entities,
-)
-from agent_utilities.knowledge_graph.memory.native_ingest import (
-    media_store as _native_media_store,
-)
 
 _SOURCE = "pulselink-mcp"
 _DOMAIN = "pulselink"
+_BINDING = IngestBinding(connector=_SOURCE, stream=_DOMAIN)
 
 
-def ingest_entities(
+def _to_entity(record: dict[str, Any]) -> Entity:
+    return Entity(
+        id=record.get("id"),
+        node_type=record.get("node_type"),
+        properties={
+            k: v for k, v in record.items() if k not in ("id", "node_type")
+        },
+    )
+
+
+def _to_relationship(record: dict[str, Any]) -> Relationship:
+    properties = {
+        k: v
+        for k, v in record.items()
+        if k not in ("source", "target", "relationship")
+    }
+    return Relationship(
+        source=record["source"],
+        target=record["target"],
+        relationship=record["relationship"],
+        properties=properties or None,
+    )
+
+
+async def ingest_entities(
     entities: list[dict[str, Any]],
     relationships: list[dict[str, Any]] | None = None,
     *,
-    source: str = _SOURCE,
-    domain: str = _DOMAIN,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
-    """Write canonical typed nodes and relationships through agent-utilities."""
-    return _native_ingest_entities(
-        entities,
-        relationships,
-        source=source,
-        domain=domain,
-        client=client,
-        graph=graph,
+    """Write canonical typed nodes and relationships in one change set."""
+    if not entities:
+        raise IngestError("ingest_entities needs at least one entity")
+    change_set = ChangeSet(
+        entities=tuple(_to_entity(e) for e in entities),
+        relationships=tuple(_to_relationship(r) for r in relationships or ()),
     )
+    service = ingest or current_ingest()
+    receipt = await service.submit(_BINDING, change_set)
+    return {"nodes": receipt.affected_count, "edges": receipt.relationship_count}
 
 
-def ingest_documents(
+async def ingest_documents(
     documents: list[dict[str, Any]],
     *,
-    source: str = _SOURCE,
-    domain: str = _DOMAIN,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
-    """Write searchable documents through the authoritative native-ingest path."""
-    return _native_ingest_documents(
-        documents,
-        source=source,
-        domain=domain,
-        client=client,
-        graph=graph,
-    )
+    """Write searchable documents, typed canonically, through the ingest facade.
 
-
-def media_store() -> Any:
-    """Return the authoritative native media store."""
-    return _native_media_store()
+    A textless document is dropped; if none remain, raises ``IngestError``.
+    """
+    mapped = [d for d in documents if d.get("text")]
+    if not mapped:
+        raise IngestError("ingest_documents needs at least one document with text")
+    entities = [{**d, "node_type": d.get("node_type", "Document")} for d in mapped]
+    return await ingest_entities(entities, ingest=ingest)
 
 
 def _present(value: Any) -> Any:
@@ -208,12 +221,11 @@ def _map_documents(
     return nodes, relationships
 
 
-def ingest_pulse_documents(
+async def ingest_pulse_documents(
     source: str,
     documents: list[dict[str, Any]],
     *,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
     """Map PulseLink result documents → :Document/:PulseSource/:Person nodes and ingest.
 
@@ -223,5 +235,5 @@ def ingest_pulse_documents(
     nodes, relationships = _map_documents(source, documents)
     # Only the lone :PulseSource node means nothing usable was mapped.
     if len(nodes) <= 1:
-        raise NativeIngestError("PulseLink ingest requires at least one document")
-    return ingest_entities(nodes, relationships, client=client, graph=graph)
+        raise IngestError("PulseLink ingest requires at least one document")
+    return await ingest_entities(nodes, relationships, ingest=ingest)

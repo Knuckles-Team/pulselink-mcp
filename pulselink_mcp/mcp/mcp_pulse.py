@@ -22,7 +22,7 @@ from ..sources.base import CredentialAuthorityUnavailable
 logger = logging.getLogger("pulselink_mcp.mcp")
 
 
-def _maybe_ingest(source: str, result: dict) -> None:
+async def _maybe_ingest(source: str, result: dict) -> None:
     """Push a search/list/fetch result's documents into the authoritative KG."""
     if not isinstance(result, dict) or result.get("error"):
         return
@@ -33,7 +33,7 @@ def _maybe_ingest(source: str, result: dict) -> None:
         return
     from ..kg_ingest import ingest_pulse_documents
 
-    ingest_pulse_documents(source, docs)
+    await ingest_pulse_documents(source, docs)
 
 
 def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
@@ -60,7 +60,7 @@ def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
             result = await asyncio.to_thread(
                 client.search, source, query, cursor, limit
             )
-            await asyncio.to_thread(_maybe_ingest, source, result)
+            await _maybe_ingest(source, result)
             return result
         except CredentialAuthorityUnavailable:
             raise
@@ -78,7 +78,7 @@ def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
             await ctx.info(f"pulse_fetch source={source!r} target={target!r}")
         try:
             result = await asyncio.to_thread(client.fetch, source, target)
-            await asyncio.to_thread(_maybe_ingest, source, result)
+            await _maybe_ingest(source, result)
             return result
         except CredentialAuthorityUnavailable:
             raise
@@ -103,7 +103,7 @@ def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
             result = await asyncio.to_thread(
                 client.list_items, source, channel, cursor, limit
             )
-            await asyncio.to_thread(_maybe_ingest, source, result)
+            await _maybe_ingest(source, result)
             return result
         except CredentialAuthorityUnavailable:
             raise
@@ -177,5 +177,5 @@ def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
         docs = result.get("documents", [])
         from ..kg_ingest import ingest_pulse_documents
 
-        ingested = await asyncio.to_thread(ingest_pulse_documents, source, docs)
+        ingested = await ingest_pulse_documents(source, docs)
         return {"source": source, "listed": len(docs), "ingested": ingested}
