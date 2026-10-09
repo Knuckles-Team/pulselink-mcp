@@ -6,10 +6,8 @@ import atexit
 from typing import Any
 
 import requests
-from agent_utilities.core.transport_security import (
-    ResolvedTLSProfile,
-    resolve_configured_tls_profile,
-)
+from agent_connector_sdk.tls.profile import ResolvedTLSProfile
+from agent_connector_sdk.tls.resolve import resolve_tls_profile
 
 from .contracts import CredentialAuthority
 
@@ -27,7 +25,7 @@ def configured_session() -> requests.Session:
     """Return the process-wide Requests session under the configured TLS policy."""
     global _HTTP_SESSION, _TLS_PROFILE
     if _HTTP_SESSION is None:
-        _TLS_PROFILE = resolve_configured_tls_profile("pulselink")
+        _TLS_PROFILE = resolve_tls_profile("pulselink")
         _HTTP_SESSION = _TLS_PROFILE.configure_requests_session(requests.Session())
     return _HTTP_SESSION
 

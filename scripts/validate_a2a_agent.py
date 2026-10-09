@@ -6,7 +6,7 @@ import uuid
 from contextlib import asynccontextmanager
 
 import httpx
-from agent_utilities.core.transport_security import resolve_configured_tls_profile
+from agent_connector_sdk.tls.resolve import resolve_tls_profile
 
 A2A_URL = os.environ.get("A2A_URL", "")
 
@@ -14,7 +14,7 @@ A2A_URL = os.environ.get("A2A_URL", "")
 @asynccontextmanager
 async def configured_http_client():
     """Yield an HTTPX client under the runtime AgentConfig TLS policy."""
-    profile = resolve_configured_tls_profile("pulselink")
+    profile = resolve_tls_profile("pulselink")
     try:
         async with httpx.AsyncClient(
             timeout=10000.0,

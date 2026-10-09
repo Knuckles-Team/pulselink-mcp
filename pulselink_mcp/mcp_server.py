@@ -5,10 +5,9 @@ import logging
 import sys
 from typing import TYPE_CHECKING, Any
 
-from agent_utilities.base_utilities import get_logger
-from agent_utilities.core.config import load_config
-from agent_utilities.mcp.server_factory import create_mcp_server
-from agent_utilities.mcp.verbose_tools import register_tool_surface
+from agent_connector_sdk.config import load_config
+from agent_connector_sdk.mcp.server import create_mcp_server
+from agent_connector_sdk.mcp.tool_surface import register_tool_surface
 
 from pulselink_mcp.api import PulseLinkClient
 from pulselink_mcp.auth import create_client
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
 
 __version__ = "2.1.0"
 
-logger = get_logger(name="MCP_Server")
+logger = logging.getLogger("MCP_Server")
 logger.setLevel(logging.INFO)
 
 

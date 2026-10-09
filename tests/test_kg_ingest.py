@@ -1,20 +1,19 @@
 """Native epistemic-graph typed-node ingestion — Wire-First coverage.
 
 Exercises the real ``ingest_entities`` / ``ingest_documents`` / ``ingest_pulse_documents``
-seam with a fake engine client (no engine required), asserting the txn add_node/commit +
-edge calls and the PulseDocument -> :Document/:PulseSource/:Person mapping.
+seam against a fake ingest transport (no engine required), asserting the submitted
+``SourceRecord``/``SourceRelationship`` wire objects and the PulseDocument ->
+:Document/:PulseSource/:Person mapping.
 CONCEPT:AU-KG.ingest.enterprise-source-extractor.
 """
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import Any
 
-import msgpack
 import pytest
-from agent_utilities.knowledge_graph.core.session import GraphSession, use_session
-from agent_utilities.knowledge_graph.memory.native_ingest import NativeIngestError
-from agent_utilities.security.brain_context import ActorContext, ActorType, use_actor
+from agent_connector_sdk.ingest import IngestError, KnowledgeIngest
 
 from pulselink_mcp.kg_ingest import (
     ingest_documents,
@@ -23,132 +22,87 @@ from pulselink_mcp.kg_ingest import (
 )
 
 
-@pytest.fixture(autouse=True)
-def _governed_session():
-    actor = ActorContext(
-        actor_id="subject:opaque:synthetic",
-        actor_type=ActorType.AUTOMATED_SERVICE,
-        roles=(),
-        tenant_id="tenant:opaque:synthetic",
-        authenticated=True,
-    )
-    session = GraphSession(
-        actor=actor,
-        tenant=actor.tenant_id,
-        scopes=frozenset({"kg:write"}),
-        graph="graph:opaque:synthetic",
-        policy_version="policy:opaque:synthetic",
-        audience="epistemic-graph",
-    )
-    with use_actor(actor), use_session(session):
-        yield
-
-
-class _FakeNodes:
+class _FakeTransport:
     def __init__(self) -> None:
-        self.values: dict[str, dict[str, Any]] = {}
+        self.requests: list[Any] = []
 
-    def properties(self, node_id: str) -> dict[str, Any] | None:
-        return self.values.get(node_id)
+    async def source_status(self, connector: str, stream: str) -> Any:
+        return SimpleNamespace(accepted_checkpoint=None)
 
-    def list(self) -> list[tuple[str, dict[str, Any]]]:
-        return list(self.values.items())
+    async def submit(self, request: Any) -> Any:
+        self.requests.append(request)
+        return SimpleNamespace(
+            affected_count=len(request.records),
+            relationship_count=len(request.relationships),
+        )
 
-
-class _FakeChanges:
-    def __init__(self, nodes: _FakeNodes) -> None:
-        self.nodes = nodes
-        self.edges: list[tuple[str, str, dict[str, Any]]] = []
-        self.applied: list[dict[str, Any]] = []
-        self.records: dict[str, dict[str, Any]] = {}
-        self.versions: dict[str, dict[str, Any]] = {}
-
-    def get(self, envelope_id: str) -> dict[str, Any] | None:
-        return self.records.get(envelope_id)
-
-    def content_version(self, object_id: str) -> dict[str, Any] | None:
-        return self.versions.get(object_id)
-
-    def cursor(self, _source: str, _partition: str = "") -> None:
-        return None
-
-    def apply(self, envelope: dict[str, Any]) -> dict[str, Any]:
-        self.applied.append(envelope)
-        mutation = envelope["mutation"]
-        for operation in mutation["operations"]:
-            method = operation["method"]
-            params = method["params"]
-            properties = msgpack.unpackb(params["properties_msgpack"], raw=False)
-            if method["method"] == "AddNode":
-                self.nodes.values[params["node_id"]] = properties
-            elif method["method"] == "AddEdge":
-                self.edges.append(
-                    (params["source_id"], params["target_id"], properties)
-                )
-        version = envelope["content_version"]
-        self.versions[version["object_id"]] = version
-        self.records[envelope["envelope_id"]] = envelope
-        return {
-            "batch_id": mutation["batch_id"],
-            "replayed": False,
-            "projection_pending": False,
-        }
+    async def store_blob(self, data: bytes) -> str:
+        raise AssertionError("this connector's ingestion carries no media")
 
 
-class _FakeRdf:
-    def validate_shacl(self, _shapes: str, _data_graph: str) -> dict[str, Any]:
-        return {"conforms": True, "results": []}
+@pytest.fixture
+def ingest():
+    transport = _FakeTransport()
+    return KnowledgeIngest(transport, loop=None), transport
 
 
-class _FakeClient:
-    def __init__(self) -> None:
-        self.nodes = _FakeNodes()
-        self.changes = _FakeChanges(self.nodes)
-        self.rdf = _FakeRdf()
-
-    @staticmethod
-    def supports(operation: str) -> bool:
-        return operation == "ApplyChangeEnvelope"
+def _records_by_id(request: Any) -> dict[str, Any]:
+    return {r.record_id: r for r in request.records}
 
 
-def test_ingest_entities_writes_nodes_and_edges():
-    c = _FakeClient()
-    res = ingest_entities(
+def _node_type_of(record: Any) -> str:
+    # mapping_reference: "manifest:<connector>#schema_mappings/<node_type>"
+    return record.mapping_reference.rsplit("/", 1)[-1]
+
+
+def _relationship_name_of(rel: Any) -> str:
+    # relation_reference: "manifest:<connector>#resources/<type>/relations/<name>"
+    return rel.relation_reference.rsplit("/", 1)[-1]
+
+
+@pytest.mark.asyncio
+async def test_ingest_entities_writes_nodes_and_edges(ingest):
+    service, transport = ingest
+    res = await ingest_entities(
         [
             {"id": "a", "node_type": "Document", "text": "hi"},
             {"id": "b", "node_type": "PulseSource"},
         ],
         [{"source": "a", "target": "b", "relationship": "fromSource"}],
-        client=c,
+        ingest=service,
     )
     assert res == {"nodes": 2, "edges": 1}
-    assert len(c.changes.applied) == 1
-    assert set(c.nodes.values) == {"a", "b"}
-    # provenance is stamped
-    assert c.nodes.values["a"]["source"] == "pulselink-mcp"
-    assert c.nodes.values["a"]["domain"] == "pulselink"
-    assert c.changes.edges == [("a", "b", {"relationship": "fromSource"})]
+    request = transport.requests[0]
+    assert set(_records_by_id(request)) == {"a", "b"}
+    rel = request.relationships[0]
+    assert rel.source.record_id == "a"
+    assert rel.target.record_id == "b"
+    assert _relationship_name_of(rel) == "fromSource"
 
 
-def test_ingest_documents_sets_type_and_keeps_text():
-    c = _FakeClient()
-    res = ingest_documents(
+@pytest.mark.asyncio
+async def test_ingest_documents_sets_type_and_keeps_text(ingest):
+    service, transport = ingest
+    res = await ingest_documents(
         [{"id": "d1", "text": "body", "title": "T"}],
-        client=c,
+        ingest=service,
     )
     assert res == {"nodes": 1, "edges": 0}
-    assert c.nodes.values["d1"]["node_type"] == "Document"
-    assert c.nodes.values["d1"]["text"] == "body"
+    record = _records_by_id(transport.requests[0])["d1"]
+    assert _node_type_of(record) == "Document"
+    assert record.payload["text"] == "body"
 
 
-def test_ingest_documents_rejects_textless_input():
-    c = _FakeClient()
-    with pytest.raises(NativeIngestError, match="at least one document"):
-        ingest_documents([{"id": "d1", "title": "no text"}], client=c)
+@pytest.mark.asyncio
+async def test_ingest_documents_rejects_textless_input(ingest):
+    service, _transport = ingest
+    with pytest.raises(IngestError, match="at least one document"):
+        await ingest_documents([{"id": "d1", "title": "no text"}], ingest=service)
 
 
-def test_ingest_pulse_documents_maps_source_person_and_links():
-    c = _FakeClient()
+@pytest.mark.asyncio
+async def test_ingest_pulse_documents_maps_source_person_and_links(ingest):
+    service, transport = ingest
     documents = [
         {
             "id": "42",
@@ -161,56 +115,58 @@ def test_ingest_pulse_documents_maps_source_person_and_links():
             "extra": {"backend": "hn-algolia"},
         }
     ]
-    res = ingest_pulse_documents("hackernews", documents, client=c)
+    res = await ingest_pulse_documents("hackernews", documents, ingest=service)
     # 3 nodes: PulseSource + Document + Person
     assert res == {"nodes": 3, "edges": 2}
-    assert c.nodes.values["pulselink:source:hackernews"]["node_type"] == "PulseSource"
-    doc = c.nodes.values["pulselink:document:hackernews:42"]
-    assert doc["node_type"] == "Document"
-    assert doc["text"] == "the body"
-    assert doc["permalink"] == "https://news.ycombinator.com/item?id=42"
-    assert doc["backendName"] == "hn-algolia"
-    assert doc["engagement"] == '{"points": 100}'
-    assert doc["externalToolId"] == "42"
-    assert c.nodes.values["pulselink:person:pg"]["node_type"] == "Person"
+    records = _records_by_id(transport.requests[0])
+    assert _node_type_of(records["pulselink:source:hackernews"]) == "PulseSource"
+    doc = records["pulselink:document:hackernews:42"]
+    assert _node_type_of(doc) == "Document"
+    assert doc.payload["text"] == "the body"
+    assert doc.payload["permalink"] == "https://news.ycombinator.com/item?id=42"
+    assert doc.payload["backendName"] == "hn-algolia"
+    assert doc.payload["engagement"] == '{"points": 100}'
+    assert doc.payload["externalToolId"] == "42"
+    assert _node_type_of(records["pulselink:person:pg"]) == "Person"
+    rels = {
+        (rel.source.record_id, rel.target.record_id, _relationship_name_of(rel))
+        for rel in transport.requests[0].relationships
+    }
     assert (
         "pulselink:document:hackernews:42",
         "pulselink:source:hackernews",
-        {"relationship": "fromSource"},
-    ) in c.changes.edges
+        "fromSource",
+    ) in rels
     assert (
         "pulselink:document:hackernews:42",
         "pulselink:person:pg",
-        {"relationship": "authoredBy"},
-    ) in c.changes.edges
+        "authoredBy",
+    ) in rels
 
 
-def test_ingest_pulse_documents_dedupes_author_person():
-    c = _FakeClient()
+@pytest.mark.asyncio
+async def test_ingest_pulse_documents_dedupes_author_person(ingest):
+    service, transport = ingest
     documents = [
         {"id": "1", "text": "a", "author": "alice"},
         {"id": "2", "text": "b", "author": "alice"},
     ]
-    res = ingest_pulse_documents("reddit", documents, client=c)
+    res = await ingest_pulse_documents("reddit", documents, ingest=service)
     # PulseSource + 2 Documents + 1 shared Person = 4 nodes; 2 fromSource + 2 authoredBy
     assert res == {"nodes": 4, "edges": 4}
-    assert "pulselink:person:alice" in c.nodes.values
+    assert "pulselink:person:alice" in _records_by_id(transport.requests[0])
 
 
-def test_ingest_pulse_documents_rejects_unusable_documents():
+@pytest.mark.asyncio
+async def test_ingest_pulse_documents_rejects_unusable_documents(ingest):
+    service, _transport = ingest
     documents = [{"id": "", "text": "no id"}, {"id": "x", "text": ""}]
-    with pytest.raises(NativeIngestError, match="at least one document"):
-        ingest_pulse_documents("web", documents, client=_FakeClient())
+    with pytest.raises(IngestError, match="at least one document"):
+        await ingest_pulse_documents("web", documents, ingest=service)
 
 
-def test_retired_node_type_alias_is_rejected():
-    with pytest.raises(NativeIngestError, match="canonical node_type"):
-        ingest_entities(
-            [{"id": "retired", "type": "RetiredAlias"}],
-            client=_FakeClient(),
-        )
-
-
-def test_empty_native_ingest_is_rejected():
-    with pytest.raises(NativeIngestError, match="at least one entity"):
-        ingest_entities([], client=_FakeClient())
+@pytest.mark.asyncio
+async def test_empty_entities_is_rejected(ingest):
+    service, _transport = ingest
+    with pytest.raises(IngestError, match="at least one entity"):
+        await ingest_entities([], ingest=service)
