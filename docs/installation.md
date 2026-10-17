@@ -17,8 +17,7 @@ pip install pulselink-mcp
 
 | Extra | Install | Pulls in |
 |---|---|---|
-| `mcp` | `pip install "pulselink-mcp[mcp]"` | FastMCP MCP-server runtime (`agent-utilities[mcp]`) |
-| `agent` | `pip install "pulselink-mcp[agent]"` | Pydantic-AI agent + Logfire tracing |
+| `mcp` | `pip install "pulselink-mcp[mcp]"` | FastMCP MCP-server runtime (`agent-connector-sdk`) |
 | `all` | `pip install "pulselink-mcp[all]"` | Everything above |
 
 ## From source

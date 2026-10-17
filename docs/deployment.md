@@ -3,7 +3,6 @@
 This page covers running `pulselink-mcp` as long-lived servers.
 
 > `pulselink-mcp` ships both an **MCP server** (console script `pulselink-mcp`) and an
-> **A2A agent server** (console script `pulselink-agent`).
 
 <!-- BEGIN GENERATED: deployment-options -->
 ## Deployment Options
@@ -71,11 +70,5 @@ Store the real remote URL, outbound identity reference, and TLS-profile referenc
 
 ```bash
 docker compose -f docker/mcp.compose.yml up -d      # MCP server only
-docker compose -f docker/agent.compose.yml up -d    # MCP + agent
 ```
 
-## Run the A2A agent server
-
-```bash
-pulselink-agent --mcp-config mcp_config.json --web
-```

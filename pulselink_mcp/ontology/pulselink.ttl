@@ -74,5 +74,5 @@
     rdfs:comment """PulseLink keyless open-web and social-research model — source ladders and their
     fallback backends across YouTube, Reddit, X, Hacker News, the web, RSS/news, GitHub, V2EX and
     Bilibili, plus the normalized documents they return (reusing the shared :Document and :Person
-    classes) — federated into the agent-utilities knowledge-graph hub.""" ;
+    classes) — federated into the agent-connector-sdk knowledge-graph hub.""" ;
     owl:imports <http://knuckles.team/kg> .

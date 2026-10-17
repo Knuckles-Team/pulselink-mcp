@@ -1,5 +1,5 @@
 # PulseLink MCP
-## CLI or API | MCP | Agent
+## CLI or API | MCP
 
 ![PyPI - Version](https://img.shields.io/pypi/v/pulselink-mcp)
 ![MCP Server](https://badge.mcpx.dev?type=server 'MCP Server')
@@ -11,7 +11,6 @@
 *Version: 2.1.0*
 
 > **Documentation** — Installation, deployment, usage across the API, CLI, and MCP
-> interfaces, the integrated A2A agent server, and guidance for provisioning the
 > backing platform are maintained in the
 > [official documentation](https://knuckles-team.github.io/pulselink-mcp/).
 
@@ -19,9 +18,9 @@
 
 ## Overview
 
-**PulseLink MCP MCP Server + A2A Agent**
+**PulseLink MCP Server**
 
-PulseLink — keyless open-web & social research source (MCP Server + A2A Server)
+PulseLink — keyless open-web & social research source (MCP Server)
 
 This repository is actively maintained - Contributions are welcome!
 
@@ -32,7 +31,7 @@ This repository is actively maintained - Contributions are welcome!
 <!-- MCP-CONFIG-EXAMPLES:START -->
 
 > **Install the connector-focused `[mcp]` extra.** Examples use `pulselink-mcp[mcp]` to add
-> FastMCP / FastAPI through `agent-utilities[mcp]`; the required Agent Utilities core
+> FastMCP / FastAPI through `agent-connector-sdk`; the required Agent Connector SDK core
 > still carries `epistemic-graph[full]`. The `[agent-runtime]` extra additionally
 > enables model orchestration.
 
@@ -50,10 +49,7 @@ This repository is actively maintained - Contributions are welcome!
       ],
       "env": {
         "MCP_TOOL_MODE": "intent",
-        "PULSETOOL": "True",
-        "XAI_BASE_URL": "https://api.x.ai/v1",
-        "XAI_SEARCH_RETRIES": "2",
-        "XAI_SEARCH_TIMEOUT_SECONDS": "180"
+        "PULSETOOL": "True"
       }
     }
   }
@@ -85,10 +81,7 @@ own runtime secret boundary.
         "HOST": "127.0.0.1",
         "PORT": "8000",
         "MCP_TOOL_MODE": "intent",
-        "PULSETOOL": "True",
-        "XAI_BASE_URL": "https://api.x.ai/v1",
-        "XAI_SEARCH_RETRIES": "2",
-        "XAI_SEARCH_TIMEOUT_SECONDS": "180"
+        "PULSETOOL": "True"
       }
     }
   }
@@ -120,9 +113,6 @@ docker run -i --rm \
   -e TRANSPORT=stdio \
   -e MCP_TOOL_MODE=intent \
   -e PULSETOOL=True \
-  -e XAI_BASE_URL=https://api.x.ai/v1 \
-  -e XAI_SEARCH_RETRIES=2 \
-  -e XAI_SEARCH_TIMEOUT_SECONDS=180 \
   registry.example.invalid/pulselink-mcp@sha256:<digest> pulselink-mcp
 ```
 
@@ -203,7 +193,6 @@ _6 action-routed tool(s) · 6 verbose 1:1 tool(s). Each is enabled unless its `<
 | `MODEL_TLS_PROFILE` | `public-default` |  |
 | `MODEL_TLS_PROFILE_REF` | `secret://runtime/model-tls-profile` |  |
 | `PULSELINK_MCP_MCP_IMAGE` | `registry.example/pulselink-mcp@sha256:<digest>` |  |
-| `PULSELINK_MCP_AGENT_IMAGE` | `registry.example/pulselink-agent@sha256:<digest>` |  |
 | `ENABLE_OTEL` | `True` |  |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:8080/api/public/otel` |  |
 | `OTEL_EXPORTER_OTLP_PUBLIC_KEY_REF` | `secret://observability/otel/public-key` |  |
@@ -212,16 +201,12 @@ _6 action-routed tool(s) · 6 verbose 1:1 tool(s). Each is enabled unless its `<
 | `EUNOMIA_TYPE` | `none` | options: none, embedded, remote |
 | `EUNOMIA_POLICY_FILE` | `mcp_policies.json` |  |
 | `EUNOMIA_REMOTE_URL` | `http://eunomia-server:8000` |  |
-| `XAI_BASE_URL` | `https://api.x.ai/v1` | xAI API base URL |
-| `XAI_SEARCH_MODEL` | — | required only when X live search is used |
-| `XAI_SEARCH_TIMEOUT_SECONDS` | `180` | per-request timeout (seconds) |
-| `XAI_SEARCH_RETRIES` | `2` | retry attempts on failure |
 | `PROVIDER` | — | operator-selected model provider |
 | `MODEL_ID` | — | operator-selected model capability |
 | `PULSETOOL` | `True` | These names match the authoritative "Toggle Env Var" column in the README MCP tools table (condensed action-routed surface). |
 | `SOURCE_CREDENTIALS` | `{"x":{"type":"cookie_session","secret":"vault://pulselink/x/session"},"reddit":{"type":"oauth2","secret":"vault://pulselink/reddit/token","token_url":"https://www.reddit.com/api/v1/access_token","client_id":"<id>","client_secret_secret":"vault://pulselink/reddit/cs"},"github":{"type":"api_key","secret":"env://GITHUB_TOKEN","prefix":"token "},"exa":{"type":"api_key","secret":"env://EXA_API_KEY","prefix":""}}` | Keyless sources (youtube, web, rss, news, hackernews, v2ex, bilibili) need NOTHING here. Auth-laddered sources light up their higher-fidelity backend when a credential is set. SOURCE_CREDENTIALS is a JSON object mapping a source -> credential descriptor; secret values are URI refs resolved via the injected secrets backend (vault://, env://). Example: |
 
-#### Inherited agent-utilities variables (apply to every connector)
+#### Inherited agent-connector-sdk variables (apply to every connector)
 
 | Variable | Example | Description |
 |----------|---------|-------------|
@@ -240,7 +225,7 @@ _6 action-routed tool(s) · 6 verbose 1:1 tool(s). Each is enabled unless its `<
 | `MCP_URL` | `http://localhost:8000/mcp` | URL of the MCP server the agent connects to |
 | `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
-_27 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
+_27 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-connector-sdk set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
 
 
@@ -264,10 +249,6 @@ operator-supplied; keyless and non-model source paths do not require it.
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `XAI_BASE_URL` | xAI API base URL | `https://api.x.ai/v1` |
-| `XAI_SEARCH_MODEL` | Operator-selected model used for X live search | required for this capability |
-| `XAI_SEARCH_TIMEOUT_SECONDS` | Per-request timeout (seconds) | `180` |
-| `XAI_SEARCH_RETRIES` | Retry attempts on failure | `2` |
 
 ### Source credentials (keyless-first)
 | Variable | Description | Default |
@@ -309,8 +290,7 @@ Pick the extra that matches what the operator want to run:
 
 | Extra | Installs | Use when |
 |-------|----------|----------|
-| `pulselink-mcp[mcp]` | Connector-focused MCP server (`agent-utilities[mcp]` — FastMCP/FastAPI + `epistemic-graph[full]`) | The operator only run the **MCP server** (smallest install / image) |
-| `pulselink-mcp[agent]` | Agent runtime (`agent-utilities[agent-runtime,logfire]` — model orchestration + `epistemic-graph[full]`) | The operator run the **integrated agent** |
+| `pulselink-mcp[mcp]` | Connector-focused MCP server (`agent-connector-sdk` — FastMCP/FastAPI + `epistemic-graph[full]`) | The operator only run the **MCP server** (smallest install / image) |
 | `pulselink-mcp[all]` | Everything (`mcp` + `agent` + `logfire` + the `youtube`/`feeds`/`audio` source extras) | Development / both surfaces |
 
 ```bash
@@ -318,7 +298,6 @@ Pick the extra that matches what the operator want to run:
 uv pip install "pulselink-mcp[mcp]"
 
 # Agent runtime (adds model orchestration to the shared graph engine)
-uv pip install "pulselink-mcp[agent]"
 
 # Everything (development)
 uv pip install "pulselink-mcp[all]"      # or: python -m pip install "pulselink-mcp[all]"
@@ -328,28 +307,23 @@ uv pip install "pulselink-mcp[all]"      # or: python -m pip install "pulselink-
 > `audio` → `faster-whisper`) are lazy-imported; the keyless web/forum/news/dev
 > sources need none of them. Install `pulselink-mcp[sources]` for `youtube` + `feeds`.
 
-### Container images (`:mcp` vs `:agent`)
+### Container images (`:mcp`)
 
-One multi-stage `docker/Dockerfile` builds two right-sized images, selected by `--target`:
+One multi-stage `docker/Dockerfile` builds the MCP-only image (`--target mcp`):
 
 | Image tag | Build target | Contents | Entrypoint |
 |-----------|--------------|----------|------------|
 | `example/pulselink-mcp:mcp` | `--target mcp` | `pulselink-mcp[mcp]` — **connector-focused**, includes `epistemic-graph[full]`; no model-orchestration stack | `pulselink-mcp` |
-| `example/pulselink-mcp@sha256:<digest>` | `--target agent` (default) | `pulselink-mcp[agent]` — **agent runtime**, model orchestration + `epistemic-graph[full]` | `pulselink-agent` |
 
 ```bash
 docker build --target mcp   -t example/pulselink-mcp:mcp    docker/   # connector-focused MCP server
-docker build --target agent -t example/pulselink-mcp:agent-local docker/   # agent runtime
 ```
 
-`docker/mcp.compose.yml` runs the connector-focused `:mcp` server; `docker/agent.compose.yml` runs the
 agent (`immutable agent digest`) with a co-located `:mcp` sidecar.
 
 ### Knowledge-graph database (`epistemic-graph`)
 
-Both `[mcp]` and `[agent]` carry the **epistemic-graph** engine through the required
-Agent Utilities core dependency (`epistemic-graph[full]`). The `[mcp]` extra keeps
-the server connector-focused; `[agent]` also enables model orchestration. Local
+Agent Connector SDK core dependency (`epistemic-graph[full]`). The `[mcp]` extra keeps
 deployments can use the bundled engine. For production or shared state, run
 **epistemic-graph as a dedicated database service** and configure the runtime to use it.
 Deployment recipes (single-node + Raft HA), connection configuration, and architecture
@@ -357,27 +331,26 @@ diagrams are documented in the
 [epistemic-graph deployment guide](https://knuckles-team.github.io/epistemic-graph/deployment/).
 
 
-<!-- BEGIN agent-utilities-deployment (generated; do not edit between markers) -->
+<!-- BEGIN agent-connector-sdk-deployment (generated; do not edit between markers) -->
 
-## Deploy with `agent-utilities-deployment`
+## Deploy with `agent-connector-sdk-deployment`
 
-Provision this package with the consolidated **`agent-utilities-deployment`**
+Provision this package with the consolidated **`agent-connector-sdk-deployment`**
 workflow. It selects an installed-package, editable-source, or immutable-container
 path; records only runtime secret and TLS-profile references in `AgentConfig`; and
 runs doctor, registration, policy, observability, and rollback gates. Ask your agent
-to **"deploy `pulselink-mcp` with agent-utilities-deployment"**.
+to **"deploy `pulselink-mcp` with agent-connector-sdk-deployment"**.
 
 | Install mode | Command |
 |------|---------|
 | Installed package | `uv tool install "pulselink-mcp[mcp]"`, then run `pulselink-mcp` |
-| Editable source | `uv pip install -e ".[agent]"`, then run `pulselink-mcp` |
 | Immutable container | deploy `registry.example.invalid/pulselink-mcp@sha256:<digest>` through the operator-selected orchestrator |
 
 The repository embeds no deployment profile, credential value, certificate path, or
 environment-specific endpoint. Supply those at runtime through `AgentConfig` and the
 configured secret provider.
 
-<!-- END agent-utilities-deployment -->
+<!-- END agent-connector-sdk-deployment -->
 
 <!-- GOVERNED-CAPABILITY:START -->
 ## Governed capability contract

@@ -1,6 +1,6 @@
 """Native epistemic-graph ingestion for PulseLink records.
 
-CONCEPT:AU-KG.ingest.enterprise-source-extractor. Connector-specific mappers emit
+Connector-specific mappers emit
 canonical node_type nodes and relationship edges through the
 ``agent_connector_sdk.ingest`` knowledge-ingest facade, which owns the transaction
 and raises ``IngestError`` when the authoritative engine cannot commit.
@@ -20,7 +20,7 @@ from agent_connector_sdk.ingest import (
     Relationship,
     current_ingest,
 )
-from agent_utilities.knowledge_graph.enrichment.extractors.social import (
+from pulselink_mcp.social_entities import (
     extract_structured_entities,
     to_kg_rows,
 )
@@ -125,7 +125,7 @@ def _document_node(
 def _document_entity_nodes(
     d: dict[str, Any], doc_id: str, seen_entities: set[str]
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Free-first deterministic entity extraction (CONCEPT:AU-KG.ingest.deterministic-social-entity-mining):
+    """Free-first deterministic entity extraction (deterministic social entity mining):
     mine the platform's OWN structured entities.hashtags/user_mentions/urls
     (passed through by the social backends' ``extra["entities"]``) into
     :Hashtag/:Mention/:Tool nodes, before any LLM enrichment runs on this
