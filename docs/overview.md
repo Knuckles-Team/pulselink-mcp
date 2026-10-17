@@ -23,6 +23,5 @@ This project implements or inherits the following ecosystem concepts:
 | Concept ID | Description | Source |
 |:-----------|:------------|:-------|
 | ECO-4.1 | MCP & Universal Skills | `agent-connector-sdk` (inherited) |
-| AU-ECO.toolkit.journey-map-narrative | A2A Network & Consensus | `agent-connector-sdk` (inherited) |
 
 > 📖 **Full Registry**: See [`agent-connector-sdk/docs/overview.md`](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/docs/overview.md) for the complete 5-Pillar concept index.

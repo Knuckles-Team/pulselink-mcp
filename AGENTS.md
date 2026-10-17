@@ -76,7 +76,6 @@ pulselink-mcp
 - Use `agent-connector-sdk` base classes.
 
 **Ask first:**
-- Major refactors of `mcp_server.py` or `agent_server.py`.
 - Removing or renaming public tool functions.
 
 **Never do:**

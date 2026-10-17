@@ -223,11 +223,9 @@ _6 action-routed tool(s) · 6 verbose 1:1 tool(s). Each is enabled unless its `<
 | `DEBUG` | `False` | Verbose logging |
 | `PYTHONUNBUFFERED` | `1` | Unbuffered stdout (recommended in containers) |
 | `MCP_URL` | `http://localhost:8000/mcp` | URL of the MCP server the agent connects to |
-| `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
 _27 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-connector-sdk set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
-
 
 Every variable the server reads.
 
@@ -274,16 +272,6 @@ The full list is in the [Available MCP Tools](#available-mcp-tools) table above.
 | `EUNOMIA_POLICY_FILE` | Embedded policy file | `mcp_policies.json` |
 | `EUNOMIA_REMOTE_URL` | Remote Eunomia server URL | — |
 
-### Agent CLI (full `[agent]` runtime only)
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MCP_URL` | URL of the MCP server the agent connects to | `http://localhost:8000/mcp` |
-| `PROVIDER` | Operator-selected model provider | required |
-| `MODEL_ID` | Operator-selected model capability | required |
-| `ENABLE_WEB_UI` | Serve the AG-UI web interface | `True` |
-
-See [`.env.example`](.env.example) for a copy-paste starting point.
-
 ## Installation
 
 Pick the extra that matches what the operator want to run:
@@ -329,7 +317,6 @@ deployments can use the bundled engine. For production or shared state, run
 Deployment recipes (single-node + Raft HA), connection configuration, and architecture
 diagrams are documented in the
 [epistemic-graph deployment guide](https://knuckles-team.github.io/epistemic-graph/deployment/).
-
 
 <!-- BEGIN agent-connector-sdk-deployment (generated; do not edit between markers) -->
 

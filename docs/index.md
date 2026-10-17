@@ -15,7 +15,6 @@ typed, action-routed connector.
 ## Overview
 
 `pulselink-mcp` wraps the target service with typed, deterministic MCP tools and an
-optional Pydantic-AI agent server.
 
 The connector remains inactive when credentials are absent: configure
 `PULSELINK_MCP_URL` and `PULSELINK_MCP_TOKEN` to connect it to an instance.
@@ -25,7 +24,6 @@ The connector remains inactive when credentials are absent: configure
 <div class="grid cards" markdown>
 
 - :material-rocket-launch: **[Installation](installation.md)** — pip, source, extras, and the prebuilt Docker image.
-- :material-server-network: **[Deployment](deployment.md)** — run the MCP and agent servers, Docker Compose, Caddy + Technitium.
 - :material-console: **[Usage](usage.md)** — the MCP tools, the Python client, and the CLI.
 - :material-database-cog: **[Backing Platform](platform.md)** — deploy the target service with Docker.
 - :material-sitemap: **[Overview](overview.md)** — the action-routed tool surface and architecture.
