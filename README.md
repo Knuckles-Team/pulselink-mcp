@@ -8,7 +8,7 @@
 ![PyPI - License](https://img.shields.io/pypi/l/pulselink-mcp)
 ![GitHub last commit (by committer)](https://img.shields.io/github/last-commit/Knuckles-Team/pulselink-mcp)
 
-*Version: 2.2.0*
+*Version: 2.2.1*
 
 > **Documentation** — Installation, deployment, usage across the API, CLI, and MCP
 > backing platform are maintained in the
