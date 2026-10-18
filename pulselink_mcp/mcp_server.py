@@ -16,9 +16,9 @@ from pulselink_mcp.sources.contracts import UnavailableCredentialAuthority
 from .mcp import register_pulse_tools
 
 if TYPE_CHECKING:
-    from agent_utilities.security.secrets_client import SecretsClient
+    from agent_connector_sdk.credentials.resolver import CredentialResolver
 
-__version__ = "2.1.0"
+__version__ = "2.2.0"
 
 logger = logging.getLogger("MCP_Server")
 logger.setLevel(logging.INFO)
@@ -63,10 +63,10 @@ def get_mcp_instance() -> tuple[Any, Any, Any]:
 
 def get_runtime_mcp_instance(
     *,
-    secrets_client: SecretsClient,
+    credential_resolver: CredentialResolver,
 ) -> tuple[Any, Any, Any]:
-    """Build an executable surface from explicit encrypted-secret authority."""
-    return _build_mcp(create_client(secrets_client))
+    """Build an executable surface from an explicit credential resolver."""
+    return _build_mcp(create_client(credential_resolver))
 
 
 def mcp_server():
@@ -74,18 +74,13 @@ def mcp_server():
         get_mcp_instance()
         return
 
-    from agent_utilities.knowledge_graph.core.graph_compute import GraphComputeEngine
-    from agent_utilities.security.secrets_client import (
-        InEpistemicGraphBackend,
-        SecretsClient,
+    from agent_connector_sdk.credentials.resolution import (
+        default_credential_resolver,
     )
 
-    engine = GraphComputeEngine.get_or_create(
-        graph_name="__secrets__",
-        backend_type="rust",
+    mcp, args, _ = get_runtime_mcp_instance(
+        credential_resolver=default_credential_resolver()
     )
-    secrets_client = SecretsClient(InEpistemicGraphBackend(engine))
-    mcp, args, _ = get_runtime_mcp_instance(secrets_client=secrets_client)
 
     print(f"PulseLink MCP v{__version__}", file=sys.stderr)
     print("\nStarting MCP Server", file=sys.stderr)

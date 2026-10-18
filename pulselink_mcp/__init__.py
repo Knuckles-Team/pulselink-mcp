@@ -10,7 +10,6 @@ CORE_MODULES = [
 ]
 
 OPTIONAL_MODULES = {
-    "pulselink_mcp.agent_server": "agent",
     "pulselink_mcp.mcp_server": "mcp",
 }
 

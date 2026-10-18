@@ -2,7 +2,7 @@ import inspect
 from unittest.mock import Mock
 
 import pytest
-from agent_utilities.security.secrets_client import SecretsClient
+from agent_connector_sdk.credentials.resolver import CredentialResolver
 
 from pulselink_mcp.api import PulseLinkClient
 from pulselink_mcp.mcp_server import get_mcp_instance, get_runtime_mcp_instance
@@ -14,14 +14,14 @@ from pulselink_mcp.sources.forums import HackerNewsBackend
 def test_mcp_instance_registration(monkeypatch):
     monkeypatch.setattr("sys.argv", ["pulselink-mcp"])
     mcp, args, middlewares = get_runtime_mcp_instance(
-        secrets_client=Mock(spec=SecretsClient)
+        credential_resolver=Mock(spec=CredentialResolver)
     )
     assert mcp is not None
 
 
 def test_runtime_constructor_annotation_is_import_safe() -> None:
-    parameter = inspect.signature(get_runtime_mcp_instance).parameters["secrets_client"]
-    assert "SecretsClient" in str(parameter.annotation)
+    parameter = inspect.signature(get_runtime_mcp_instance).parameters["credential_resolver"]
+    assert "CredentialResolver" in str(parameter.annotation)
 
 
 def test_unavailable_authority_blocks_keyless_backend_before_access(monkeypatch):

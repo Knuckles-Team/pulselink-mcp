@@ -4,7 +4,7 @@
   "schema_version": "1.0",
   "prompt_version": "0.1.0",
   "source": "pulselink-mcp",
-  "extends": "agent-utilities:base",
+  "extends": "agent-connector-sdk:base",
   "compose": "append",
   "description": "PulseLink open-web & social research specialist: keyless search/fetch/list/transcribe across YouTube, Reddit, X, Hacker News, the web, RSS/news and GitHub, mapping results into the knowledge graph.",
   "metadata": {

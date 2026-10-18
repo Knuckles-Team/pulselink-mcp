@@ -2,7 +2,6 @@
 
 > **Prefix**: `CONCEPT:PULSE-*`
 > **Version**: 0.1.0
-> **Bridge**: [`CONCEPT:AU-ECO.messaging.native-backend-abstraction`](https://github.com/Knuckles-Team/agent-utilities/blob/main/docs/concepts.md) (Unified Toolkit Ingestion)
 
 ---
 
@@ -18,12 +17,3 @@
 | `CONCEPT:PK-OS.governance.x-search-browse-tools` | Social sources (auth-laddered) | X/Twitter (API + cookie), LinkedIn |
 | `CONCEPT:PK-OS.governance.china-platform-sources` | China-platform sources | Bilibili, Xiaohongshu, Xueqiu |
 
-## Cross-Project References (from agent-utilities)
-
-| Concept ID | Name | Origin |
-|------------|------|--------|
-| `CONCEPT:AU-ECO.messaging.native-backend-abstraction` | Unified Toolkit Ingestion | agent-utilities |
-| `CONCEPT:AU-ECO.connector.mcp-tool-connector` | PulseLink open-web/social source family | agent-utilities (mcp_tool presets) |
-| `CONCEPT:AU-AHE.harness.overnight-loop-driver` | Multi-backend source-fallback ladder | agent-utilities |
-| `CONCEPT:AU-OS.deployment.universal-outbound-credentialprovider` | Universal CredentialProvider | agent-utilities |
-| `CONCEPT:AU-OS.config.source-credential-registry` | Typed source-credential registry | agent-utilities |

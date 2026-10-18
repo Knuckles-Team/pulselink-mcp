@@ -1,5 +1,5 @@
 {
-  "api_version": "graphos.io/v1",
+  "api_version": "arbora.io/v1",
   "artifacts": {
     "connector_manifest.yml": "083e1b3945868ccfeb0f714988dafb221bbca2c1a952729059e8186cf6a9d5ab",
     "pulselink_mcp/connectors/mcp_source_presets.json": "a32173afd7eedb615fda7fde039bf27bd3172969184d8bec2ba0198993fad395",
@@ -18,7 +18,7 @@
     "synthetic_fixture_contract": "passed"
   },
   "compatibility": {
-    "agent_utilities": ">=2.5.0,<3",
+    "agent_connector_sdk": ">=2.5.0,<3",
     "bundle_schema": "2",
     "epistemic_graph": ">=2.27.0,<3"
   },
