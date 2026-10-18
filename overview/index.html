@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="PulseLink — keyless open-web & social research source (MCP Server + A2A Server)">
+        <meta name="description" content="PulseLink — keyless open-web & social research source (MCP Server)">
       
       
       
@@ -812,11 +812,11 @@
 
 <h1 id="pulselink-mcp-concept-overview">pulselink-mcp — Concept Overview<a class="headerlink" href="#pulselink-mcp-concept-overview" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Category</strong>: Integration | <strong>Ecosystem Role</strong>: MCP Server + A2A Agent
-Built on <a href="https://github.com/Knuckles-Team/agent-utilities"><code>agent-utilities</code></a> — the unified AGI Harness.</p>
+<p><strong>Category</strong>: Integration | <strong>Ecosystem Role</strong>: MCP Server
+Built on <a href="https://github.com/Knuckles-Team/agent-connector-sdk"><code>agent-connector-sdk</code></a> — the unified AGI Harness.</p>
 </blockquote>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
-<p>PulseLink — keyless open-web &amp; social research source (MCP Server + A2A Server)</p>
+<p>PulseLink — keyless open-web &amp; social research source (MCP Server)</p>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
 <p>This project follows the standardized agent-package pattern:</p>
 <ul>
@@ -824,8 +824,6 @@ Built on <a href="https://github.com/Knuckles-Team/agent-utilities"><code>agent-
   tool modules) for cleaner organization.</li>
 <li><strong>Dynamic Tool Registration</strong>: action-routed dynamic tool tags, strictly
   lowercase, each togglable with a <code>*TOOL</code> environment flag.</li>
-<li><strong>A2A Agent Server</strong>: a Pydantic-AI graph agent (console script <code>pulselink-agent</code>)
-  that calls the MCP tool surface and exposes an AG-UI web interface.</li>
 </ul>
 <h2 id="concept-registry">Concept Registry<a class="headerlink" href="#concept-registry" title="Permanent link">&para;</a></h2>
 <p>This project implements or inherits the following ecosystem concepts:</p>
@@ -841,17 +839,12 @@ Built on <a href="https://github.com/Knuckles-Team/agent-utilities"><code>agent-
 <tr>
 <td style="text-align: left;">ECO-4.1</td>
 <td style="text-align: left;">MCP &amp; Universal Skills</td>
-<td style="text-align: left;"><code>agent-utilities</code> (inherited)</td>
-</tr>
-<tr>
-<td style="text-align: left;">AU-ECO.toolkit.journey-map-narrative</td>
-<td style="text-align: left;">A2A Network &amp; Consensus</td>
-<td style="text-align: left;"><code>agent-utilities</code> (inherited)</td>
+<td style="text-align: left;"><code>agent-connector-sdk</code> (inherited)</td>
 </tr>
 </tbody>
 </table>
 <blockquote>
-<p>📖 <strong>Full Registry</strong>: See <a href="https://github.com/Knuckles-Team/agent-utilities/blob/main/docs/overview.md"><code>agent-utilities/docs/overview.md</code></a> for the complete 5-Pillar concept index.</p>
+<p>📖 <strong>Full Registry</strong>: See <a href="https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/docs/overview.md"><code>agent-connector-sdk/docs/overview.md</code></a> for the complete 5-Pillar concept index.</p>
 </blockquote>
 
 

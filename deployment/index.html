@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="PulseLink — keyless open-web & social research source (MCP Server + A2A Server)">
+        <meta name="description" content="PulseLink — keyless open-web & social research source (MCP Server)">
       
       
       
@@ -681,17 +681,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#run-the-a2a-agent-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Run the A2A agent server
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -879,17 +868,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#run-the-a2a-agent-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Run the A2A agent server
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -913,8 +891,7 @@
 <h1 id="deployment">Deployment<a class="headerlink" href="#deployment" title="Permanent link">&para;</a></h1>
 <p>This page covers running <code>pulselink-mcp</code> as long-lived servers.</p>
 <blockquote>
-<p><code>pulselink-mcp</code> ships both an <strong>MCP server</strong> (console script <code>pulselink-mcp</code>) and an
-<strong>A2A agent server</strong> (console script <code>pulselink-agent</code>).</p>
+<p><code>pulselink-mcp</code> ships both an <strong>MCP server</strong> (console script <code>pulselink-mcp</code>) and an</p>
 </blockquote>
 <!-- BEGIN GENERATED: deployment-options -->
 <h2 id="deployment-options">Deployment Options<a class="headerlink" href="#deployment-options" title="Permanent link">&para;</a></h2>
@@ -964,10 +941,6 @@ the image remains immutable and contains no environment connection profile.</p>
 
 <h2 id="docker-compose">Docker Compose<a class="headerlink" href="#docker-compose" title="Permanent link">&para;</a></h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker/mcp.compose.yml<span class="w"> </span>up<span class="w"> </span>-d<span class="w">      </span><span class="c1"># MCP server only</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker/agent.compose.yml<span class="w"> </span>up<span class="w"> </span>-d<span class="w">    </span><span class="c1"># MCP + agent</span>
-</span></code></pre></div>
-<h2 id="run-the-a2a-agent-server">Run the A2A agent server<a class="headerlink" href="#run-the-a2a-agent-server" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pulselink-agent<span class="w"> </span>--mcp-config<span class="w"> </span>mcp_config.json<span class="w"> </span>--web
 </span></code></pre></div>
 
 
