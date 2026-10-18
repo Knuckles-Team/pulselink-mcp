@@ -7,11 +7,7 @@
         "pulselink-mcp"
       ],
       "env": {
-        "MCP_TOOL_MODE": "intent",
-        "PULSETOOL": "True",
-        "XAI_BASE_URL": "https://api.x.ai/v1",
-        "XAI_SEARCH_RETRIES": "2",
-        "XAI_SEARCH_TIMEOUT_SECONDS": "180"
+        "PULSETOOL": "True"
       }
     }
   }
