@@ -18,7 +18,7 @@ from .mcp import register_pulse_tools
 if TYPE_CHECKING:
     from agent_connector_sdk.credentials.resolver import CredentialResolver
 
-__version__ = "2.1.0"
+__version__ = "2.2.0"
 
 logger = logging.getLogger("MCP_Server")
 logger.setLevel(logging.INFO)
