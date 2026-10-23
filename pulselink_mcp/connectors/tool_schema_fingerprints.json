@@ -1,8 +1,0 @@
-{
-  "algorithm": "agent-connector-sdk:mcp-tool-contract-compat:v2",
-  "connector": "pulselink-mcp",
-  "schema_version": "1",
-  "tools": {
-    "pulse_search": "d824cda9688a77eaa6d89d2b8107ec2b6c5d30cec9f63b745fd3b3645cacdd61"
-  }
-}

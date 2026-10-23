@@ -1,9 +1,6 @@
 {
   "api_version": "arbora.io/v1",
   "artifacts": {
-    "connector_manifest.yml": "083e1b3945868ccfeb0f714988dafb221bbca2c1a952729059e8186cf6a9d5ab",
-    "pulselink_mcp/connectors/mcp_source_presets.json": "a32173afd7eedb615fda7fde039bf27bd3172969184d8bec2ba0198993fad395",
-    "pulselink_mcp/connectors/tool_schema_fingerprints.json": "53d49dc0ffbf76db4eaa801e159d4ec72b80fa4e7d64cc7ea4350b514ec795a2",
     "pulselink_mcp/ontology/fixtures/records.json": "a862b9027ab56ecbd7c5a8692eb76ee3a70aeadbc5c66504215ca63ec4243eae",
     "pulselink_mcp/ontology/mappings/source.yaml": "719f2705fe1fa4bfccfbd3ce49984ae64007ae7123a3bb4363145e6a640aa10d",
     "pulselink_mcp/ontology/migrations/manifest.json": "65f394410a572086e15e41c07a6a41ebe9ede69c6221940f85efa2fe0812c135",
