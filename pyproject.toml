@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pulselink-mcp"
-version = "2.3.0"
+version = "2.3.1"
 description = "PulseLink — keyless open-web & social research source (MCP Server)"
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.12, <3.15"
-dependencies = [ "agent-connector-sdk[mcp]>=0.3.0,<1.0.0", "python-dotenv>=1.2.4", "requests>=2.34.2",]
+dependencies = [ "agent-connector-sdk[mcp]>=0.3.18,<1.0.0", "python-dotenv>=1.2.4", "requests>=2.34.2",]
 [[project.authors]]
 name = "Project Maintainers"
 email = "maintainers@users.noreply.github.com"
@@ -18,13 +18,13 @@ email = "maintainers@users.noreply.github.com"
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-connector-sdk[mcp]>=0.3.0,<1.0.0",]
+mcp = [ "agent-connector-sdk[mcp]>=0.3.18,<1.0.0",]
 # Heavy / fragile transport deps stay OPTIONAL + lazy-imported (keyless-first):
 # the keyless web/forum/news/dev sources need only `requests` (via agent-connector-sdk).
 youtube = [ "yt-dlp>=2026.8.19",]
 feeds = [ "feedparser>=6.0.14",]
 audio = [ "faster-whisper>=1.2.1",]
-sources = [ "pulselink-mcp[youtube,feeds]>=2.3.0",]
+sources = [ "pulselink-mcp[youtube,feeds]>=2.3.1",]
 all = [ "pulselink-mcp[mcp,youtube,feeds,audio]>=2.2.0",]
 test = [
     "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytest-cov>=7.1.0",
