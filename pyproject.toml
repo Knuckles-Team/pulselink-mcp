@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pulselink-mcp"
-version = "2.3.1"
+version = "2.3.2"
 description = "PulseLink — keyless open-web & social research source (MCP Server)"
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
@@ -24,7 +24,7 @@ mcp = [ "agent-connector-sdk[mcp]>=0.3.18,<1.0.0",]
 youtube = [ "yt-dlp>=2026.8.19",]
 feeds = [ "feedparser>=6.0.14",]
 audio = [ "faster-whisper>=1.2.1",]
-sources = [ "pulselink-mcp[youtube,feeds]>=2.3.1",]
+sources = [ "pulselink-mcp[youtube,feeds]>=2.3.2",]
 all = [ "pulselink-mcp[mcp,youtube,feeds,audio]>=2.2.0",]
 test = [
     "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytest-cov>=7.1.0",
@@ -44,6 +44,10 @@ pulselink-mcp = "pulselink_mcp.connectors"
 
 [project.entry-points."agent_connector_sdk.prompt_providers"]
 pulselink-mcp = "pulselink_mcp.prompts"
+
+# The one declared connector identity: the fleet name (SDK-CONNECTOR-CONTROL-R071).
+[project.entry-points."agent_connector_sdk.connector"]
+pulselink-mcp = "pulselink_mcp"
 
 [tool.uv.workspace]
 members = ["."]
