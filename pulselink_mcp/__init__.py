@@ -48,3 +48,27 @@ for module_name, extra_name in OPTIONAL_MODULES.items():
         globals()[f"_{extra_name.upper()}_AVAILABLE"] = False
 
 __all__.extend(["_MCP_AVAILABLE", "_AGENT_AVAILABLE"])
+
+
+from agent_connector_sdk.connector import Connector
+from agent_connector_sdk.connector_hooks import RegistrationContext
+
+
+def _register_introspection_surface(context: RegistrationContext) -> None:
+    from pulselink_mcp.api import PulseLinkClient
+    from pulselink_mcp.mcp_server import register_server_surface
+    from pulselink_mcp.sources.contracts import UnavailableCredentialAuthority
+
+    register_server_surface(
+        context.server, PulseLinkClient(UnavailableCredentialAuthority())
+    )
+
+
+connector = Connector(
+    instructions=(
+        "PulseLink — keyless open-web & social research reach. Search, fetch, "
+        "list, and transcribe across YouTube, Reddit, X, Hacker News, the web, "
+        "RSS/news, GitHub and more; pulse_status reports per-source health."
+    ),
+    extra_registrations=(_register_introspection_surface,),
+)

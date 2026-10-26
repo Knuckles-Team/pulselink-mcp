@@ -3,9 +3,14 @@ from __future__ import annotations
 
 import logging
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from agent_connector_sdk.config import load_config
+from agent_connector_sdk.connector_identity import (
+    connector_version as _connector_version,
+)
+from agent_connector_sdk.mcp.content import ConnectorContent
 from agent_connector_sdk.mcp.server import create_mcp_server
 from agent_connector_sdk.mcp.tool_surface import register_tool_surface
 
@@ -18,18 +23,24 @@ from .mcp import register_pulse_tools
 if TYPE_CHECKING:
     from agent_connector_sdk.credentials.resolver import CredentialResolver
 
-__version__ = "2.3.3"
+__version__ = _connector_version("pulselink_mcp")
 
 logger = logging.getLogger("MCP_Server")
 logger.setLevel(logging.INFO)
 
 
-def _build_mcp(client: PulseLinkClient) -> tuple[Any, Any, Any]:
+def _build_mcp(
+    client: PulseLinkClient, *, command_args: list[str] | None = None
+) -> tuple[Any, Any, Any]:
     """Register one already-composed client on a new MCP surface."""
     load_config()
     args, mcp, middlewares = create_mcp_server(
         name="PulseLink MCP",
         version=__version__,
+        command_args=command_args,
+        content=ConnectorContent.for_package(
+            "pulselink_mcp", Path(__file__).parent, __version__
+        ),
         instructions=(
             "PulseLink — keyless open-web & social research reach. Search, fetch, "
             "list, and transcribe across YouTube, Reddit, X, Hacker News, the web, "
@@ -37,6 +48,16 @@ def _build_mcp(client: PulseLinkClient) -> tuple[Any, Any, Any]:
         ),
     )
 
+    register_server_surface(mcp, client)
+
+    for mw in middlewares:
+        mcp.add_middleware(mw)
+
+    return mcp, args, middlewares
+
+
+def register_server_surface(mcp: Any, client: PulseLinkClient) -> None:
+    """Register the original tools against the explicitly composed client."""
     register_tool_surface(
         mcp,
         client_cls=PulseLinkClient,
@@ -47,26 +68,22 @@ def _build_mcp(client: PulseLinkClient) -> tuple[Any, Any, Any]:
         ],
     )
 
-    for mw in middlewares:
-        mcp.add_middleware(mw)
 
-    return mcp, args, middlewares
-
-
-def get_mcp_instance() -> tuple[Any, Any, Any]:
+def get_mcp_instance(*, command_args: list[str] | None = None) -> tuple[Any, Any, Any]:
     """Build the non-executable schema surface used by fleet introspection."""
     client = PulseLinkClient(
         UnavailableCredentialAuthority(),
     )
-    return _build_mcp(client)
+    return _build_mcp(client, command_args=command_args)
 
 
 def get_runtime_mcp_instance(
     *,
     credential_resolver: CredentialResolver,
+    command_args: list[str] | None = None,
 ) -> tuple[Any, Any, Any]:
     """Build an executable surface from an explicit credential resolver."""
-    return _build_mcp(create_client(credential_resolver))
+    return _build_mcp(create_client(credential_resolver), command_args=command_args)
 
 
 def mcp_server():

@@ -81,7 +81,8 @@ class SourceCredential:
             )
         if kind == "cookie_session":
             pairs = (
-                part.strip().partition("=") for part in self._secret("secret").split(";")
+                part.strip().partition("=")
+                for part in self._secret("secret").split(";")
             )
             return CredentialMaterial(
                 cookies={name: value for name, _, value in pairs if name}

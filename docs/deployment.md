@@ -71,4 +71,3 @@ Store the real remote URL, outbound identity reference, and TLS-profile referenc
 ```bash
 docker compose -f docker/mcp.compose.yml up -d      # MCP server only
 ```
-

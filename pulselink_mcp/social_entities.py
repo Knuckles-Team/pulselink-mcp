@@ -53,6 +53,7 @@ def coalesce(record: Any, *paths: str, default: Any = None) -> Any:
             return value
     return default
 
+
 __all__ = [
     "KNOWN_TOOL_DOMAINS",
     "StructuredEntities",

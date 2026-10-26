@@ -20,6 +20,7 @@ from agent_connector_sdk.ingest import (
     Relationship,
     current_ingest,
 )
+
 from pulselink_mcp.social_entities import (
     extract_structured_entities,
     to_kg_rows,
@@ -34,17 +35,13 @@ def _to_entity(record: dict[str, Any]) -> Entity:
     return Entity(
         id=record.get("id"),
         node_type=record.get("node_type"),
-        properties={
-            k: v for k, v in record.items() if k not in ("id", "node_type")
-        },
+        properties={k: v for k, v in record.items() if k not in ("id", "node_type")},
     )
 
 
 def _to_relationship(record: dict[str, Any]) -> Relationship:
     properties = {
-        k: v
-        for k, v in record.items()
-        if k not in ("source", "target", "relationship")
+        k: v for k, v in record.items() if k not in ("source", "target", "relationship")
     }
     return Relationship(
         source=record["source"],
