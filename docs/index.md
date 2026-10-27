@@ -28,5 +28,6 @@ The connector remains inactive when credentials are absent: configure
 - :material-database-cog: **[Backing Platform](platform.md)** — deploy the target service with Docker.
 - :material-sitemap: **[Overview](overview.md)** — the action-routed tool surface and architecture.
 - :material-graph: **[Concepts](concepts.md)** — the CONCEPT ID registry.
+- :material-check-decagram: **[Spec delivery](spec-delivery/)** — current specification status and delivery history.
 
 </div>

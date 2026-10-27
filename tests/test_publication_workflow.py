@@ -68,6 +68,34 @@ def test_each_package_publisher_uses_the_shared_pipelines():
     }
 
 
+def test_pages_publishes_the_spec_dashboard_on_spec_changes():
+    workflow = _workflow("pages.yml")
+    publisher = workflow["jobs"]["publish-pages"]
+
+    assert not (ROOT / ".github/workflows/docs.yml").exists()
+    assert publisher["uses"] == (
+        "Knuckles-Team/pipelines/.github/workflows/pages_pipeline.yml@main"
+    )
+    assert publisher["with"] == {
+        "content_source": "docs",
+        "spec_dashboard_enabled": True,
+        "spec_dashboard_config": ".github/spec-dashboard.json",
+    }
+    assert workflow[True]["push"]["paths"] == [
+        "docs/**",
+        "mkdocs.yml",
+        "README.md",
+        "specs/**",
+        ".github/spec-dashboard.json",
+        ".github/workflows/pages.yml",
+    ]
+    assert (ROOT / ".github/spec-dashboard.json").read_text() == (
+        '{\n  "version": 1,\n  "sources": [\n'
+        '    {\n      "glob": "specs/*/status.json",\n'
+        '      "kind": "spec"\n    }\n  ]\n}\n'
+    )
+
+
 @pytest.mark.parametrize(
     "path, expected",
     [
