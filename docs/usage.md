@@ -14,7 +14,9 @@ flag.
 ```python
 from pulselink_mcp.auth import get_client
 
-api = get_client()        # reads PULSELINK_MCP_URL / PULSELINK_MCP_TOKEN from the environment / .env
+api = (
+    get_client()
+)  # reads PULSELINK_MCP_URL / PULSELINK_MCP_TOKEN from the environment / .env
 status = api.get_system_status()
 ```
 

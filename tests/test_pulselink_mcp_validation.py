@@ -56,3 +56,39 @@ async def test_introspection_surface_cannot_execute_or_report_ready(monkeypatch)
     search_tool = await mcp.get_tool("pulse_search")
     with pytest.raises(CredentialAuthorityUnavailable):
         await search_tool.run({"source": "web", "query": "authority"})
+
+
+@pytest.mark.asyncio
+async def test_runtime_and_canonical_introspection_keep_separate_clients(monkeypatch):
+    from agent_connector_sdk.connector import build_server
+
+    resolver = Mock(spec=CredentialResolver)
+    captured = []
+    import importlib
+
+    server_module = importlib.import_module("pulselink_mcp.mcp_server")
+
+    register = server_module.register_pulse_tools
+
+    def capture(server, client):
+        captured.append(client)
+        return register(server, client)
+
+    monkeypatch.setattr(server_module, "register_pulse_tools", capture)
+    command_args = ["--transport", "stdio", "--auth-type", "none"]
+    runtime, _, _ = get_runtime_mcp_instance(
+        credential_resolver=resolver, command_args=command_args
+    )
+    _, canonical = build_server("pulselink_mcp", command_args=command_args)
+    introspection, _, _ = get_mcp_instance(command_args=command_args)
+    assert len(captured) == 3
+    assert len({id(client) for client in captured}) == 3
+    captured[0]._credential_authority.require_runtime_authority()
+    for server in (canonical, introspection):
+        status = await server.get_tool("pulse_status")
+        with pytest.raises(CredentialAuthorityUnavailable):
+            await status.run({})
+    # The executable server retains its own resolver-composed authority after
+    # both schema-only surfaces are constructed; they never replace its client.
+    captured[0]._credential_authority.require_runtime_authority()
+    assert runtime is not canonical
