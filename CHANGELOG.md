@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Hosted X (Twitter) search/browse tools (`integrations/x_search_tool.py`), externalized from agent-utilities, exposing keyless X reach over the source ladder.
 
+## [2.3.5] - 2026-10-27
+
+### Added
+- Packaged `pulselink-mcp-development` skill documenting the connector's rapid-delivery, source-ladder, security, package, and release contracts.
+
 ## [0.1.0] - 2026-06-14
 
 ### Added
