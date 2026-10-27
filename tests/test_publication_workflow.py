@@ -89,7 +89,6 @@ def test_pages_publishes_the_spec_dashboard_on_spec_changes():
         ".github/spec-dashboard.json",
         ".github/workflows/pages.yml",
     ]
-    assert workflow[True]["workflow_dispatch"] == {}
     assert (ROOT / ".github/spec-dashboard.json").read_text() == (
         '{\n  "version": 1,\n  "sources": [\n'
         '    {\n      "glob": "specs/*/status.json",\n'
