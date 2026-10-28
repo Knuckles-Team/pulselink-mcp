@@ -11,8 +11,8 @@ classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MI
 requires-python = ">=3.12, <3.15"
 dependencies = [ "scion-sdk[mcp]>=0.5.6,<1.0.0", "python-dotenv>=1.2.4", "requests>=2.34.2",]
 [[project.authors]]
-name = "Project Maintainers"
-email = "maintainers@users.noreply.github.com"
+name = "Repository Maintainers"
+email = "maintainers@knuckles.team"
 
 [project.license]
 text = "MIT"
