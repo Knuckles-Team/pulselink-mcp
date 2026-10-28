@@ -39,6 +39,16 @@ repos:
     exclude: ^(tests/|test/|scripts/|script/)
   - id: ruff-format
     exclude: ^(tests/|test/|scripts/|script/)
+- repo: https://github.com/Knuckles-Team/pipelines
+  rev: main
+  hooks:
+  - id: connector-standard
+  - id: secrets
+  - id: spec
+    stages: [pre-push]
+  - id: tests-fast
+    stages: [pre-push]
+  - id: dependency-readiness
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v2.4.0 # v1.20.2
   hooks:
