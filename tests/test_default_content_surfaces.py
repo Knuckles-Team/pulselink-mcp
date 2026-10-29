@@ -35,9 +35,7 @@ async def _listings():
 
     async with Client(_server(), mode="legacy") as client:
         assert client.initialize_result is not None
-        assert client.initialize_result.server_info.version == version(
-            "pulselink-mcp"
-        )
+        assert client.initialize_result.server_info.version == version("pulselink-mcp")
         resources = {str(r.uri) for r in await client.list_resources()}
         prompts = {p.name for p in await client.list_prompts()}
         for uri in resources:
@@ -77,7 +75,6 @@ def _no_outbound_network(monkeypatch):
 
 def test_sdk_floor_supports_content_identity_and_current_pack_protocol() -> None:
     import tomllib
-
     from packaging.requirements import Requirement
 
     project = tomllib.loads((ROOT.parent / "pyproject.toml").read_text())["project"]
@@ -87,7 +84,7 @@ def test_sdk_floor_supports_content_identity_and_current_pack_protocol() -> None
     sdk = [Requirement(value) for value in declared if value.startswith("scion-sdk")]
     assert sdk
     for requirement in sdk:
-        assert requirement.specifier.contains("0.5.6")
+        assert requirement.specifier.contains("0.5.9")
         assert not requirement.specifier.contains("0.5.5")
 
 
@@ -137,7 +134,14 @@ def test_canonical_and_legacy_routes_preserve_the_full_tool_surface():
                 tool.name: tool.model_dump(mode="json")
                 for tool in await canonical_client.list_tools()
             }
-        assert {"pulse_search", "pulse_fetch", "pulse_list", "pulse_transcribe", "pulse_status", "pulse_ingest"} <= set(legacy)
+        assert {
+            "pulse_search",
+            "pulse_fetch",
+            "pulse_list",
+            "pulse_transcribe",
+            "pulse_status",
+            "pulse_ingest",
+        } <= set(legacy)
         assert declared == legacy
 
     asyncio.run(capture())
