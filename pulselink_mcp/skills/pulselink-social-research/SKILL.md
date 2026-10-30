@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [pulselink, social, reddit, hackernews, research, mcp]
 metadata:
-  author: Genius
+  author: Knuckles-Team
   version: '0.1.0'
 ---
 # PulseLink Social & Community Research

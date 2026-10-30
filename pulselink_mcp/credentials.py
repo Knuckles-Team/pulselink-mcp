@@ -1,4 +1,4 @@
-"""Per-source credentials for PulseLink, resolved through agent-connector-sdk.
+"""Per-source credentials for PulseLink, resolved through scion-sdk.
 
 ``SOURCE_CREDENTIALS`` is a JSON object mapping a source name to a descriptor.
 Descriptor secrets are references (``env://NAME`` or ``openbao://mount/path#field``)
@@ -19,10 +19,10 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import requests
-from agent_connector_sdk.config import setting
-from agent_connector_sdk.credentials.provider import CredentialProvider
-from agent_connector_sdk.credentials.references import parse_secret_reference
-from agent_connector_sdk.credentials.resolver import (
+from scion_sdk.config import setting
+from scion_sdk.credentials.provider import CredentialProvider
+from scion_sdk.credentials.references import parse_secret_reference
+from scion_sdk.credentials.resolver import (
     CredentialResolver,
     CredentialUnavailableError,
 )

@@ -10,7 +10,7 @@ in the unit suite with injected credentials, not here.
 from __future__ import annotations
 
 import pytest
-from agent_connector_sdk.credentials.provider import NoCredential
+from scion_sdk.credentials.provider import NoCredential
 
 from pulselink_mcp.sources import build_registry
 

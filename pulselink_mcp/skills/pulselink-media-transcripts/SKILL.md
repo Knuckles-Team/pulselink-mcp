@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [pulselink, youtube, podcast, transcript, whisper, mcp]
 metadata:
-  author: Genius
+  author: Knuckles-Team
   version: '0.1.0'
 ---
 # PulseLink Video & Audio Transcripts

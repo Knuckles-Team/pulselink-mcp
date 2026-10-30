@@ -50,8 +50,8 @@ for module_name, extra_name in OPTIONAL_MODULES.items():
 __all__.extend(["_MCP_AVAILABLE", "_AGENT_AVAILABLE"])
 
 
-from agent_connector_sdk.connector import Connector
-from agent_connector_sdk.connector_hooks import RegistrationContext
+from scion_sdk.connector import Connector
+from scion_sdk.connector_hooks import RegistrationContext
 
 
 def _register_introspection_surface(context: RegistrationContext) -> None:

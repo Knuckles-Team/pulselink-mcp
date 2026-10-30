@@ -42,7 +42,7 @@ from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urlsplit
 
-from agent_connector_sdk.adapters.mcp_tool_paging import dig_path as dig
+from scion_sdk.adapters.mcp_tool_paging import dig_path as dig
 
 
 def coalesce(record: Any, *paths: str, default: Any = None) -> Any:

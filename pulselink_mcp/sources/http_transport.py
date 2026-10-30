@@ -6,8 +6,8 @@ import atexit
 from typing import Any
 
 import requests
-from agent_connector_sdk.tls.profile import ResolvedTLSProfile
-from agent_connector_sdk.tls.resolve import resolve_tls_profile
+from scion_sdk.tls.profile import ResolvedTLSProfile
+from scion_sdk.tls.resolve import resolve_tls_profile
 
 from .contracts import CredentialAuthority
 

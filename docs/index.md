@@ -1,6 +1,6 @@
 # pulselink-mcp
 
-PulseLink MCP **API + MCP Server** for the agent-connector-sdk ecosystem — a
+PulseLink MCP **API + MCP Server** for the scion-sdk ecosystem — a
 typed, action-routed connector.
 
 !!! info "Official documentation"

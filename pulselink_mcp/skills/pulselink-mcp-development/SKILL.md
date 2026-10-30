@@ -8,7 +8,7 @@ description: >-
 license: MIT
 tags: [pulselink, connector, mcp, sdk, research]
 metadata:
-  author: Genius
+  author: Knuckles-Team
   version: '0.1.0'
 ---
 # PulseLink MCP Development

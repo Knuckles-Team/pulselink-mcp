@@ -6,13 +6,13 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from agent_connector_sdk.config import load_config
-from agent_connector_sdk.connector_identity import (
+from scion_sdk.config import load_config
+from scion_sdk.connector_identity import (
     connector_version as _connector_version,
 )
-from agent_connector_sdk.mcp.content import ConnectorContent
-from agent_connector_sdk.mcp.server import create_mcp_server
-from agent_connector_sdk.mcp.tool_surface import register_tool_surface
+from scion_sdk.mcp.content import ConnectorContent
+from scion_sdk.mcp.server import create_mcp_server
+from scion_sdk.mcp.tool_surface import register_tool_surface
 
 from pulselink_mcp.api import PulseLinkClient
 from pulselink_mcp.auth import create_client
@@ -21,7 +21,7 @@ from pulselink_mcp.sources.contracts import UnavailableCredentialAuthority
 from .mcp import register_pulse_tools
 
 if TYPE_CHECKING:
-    from agent_connector_sdk.credentials.resolver import CredentialResolver
+    from scion_sdk.credentials.resolver import CredentialResolver
 
 __version__ = _connector_version("pulselink_mcp")
 
@@ -91,7 +91,7 @@ def mcp_server():
         get_mcp_instance()
         return
 
-    from agent_connector_sdk.credentials.resolution import (
+    from scion_sdk.credentials.resolution import (
         default_credential_resolver,
     )
 

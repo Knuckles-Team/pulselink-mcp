@@ -7,7 +7,7 @@ root injects the resolver; no process-global provider or secret-store discovery
 is available here.
 """
 
-from agent_connector_sdk.credentials.resolver import CredentialResolver
+from scion_sdk.credentials.resolver import CredentialResolver
 
 from .api import PulseLinkClient
 from .credentials import SourceCredentials
