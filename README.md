@@ -31,7 +31,7 @@ This repository is actively maintained - Contributions are welcome!
 <!-- MCP-CONFIG-EXAMPLES:START -->
 
 > **Install the connector-focused `[mcp]` extra.** Examples use `pulselink-mcp[mcp]` to add
-> FastMCP / FastAPI through `agent-connector-sdk`; the required Agent Connector SDK core
+> FastMCP / FastAPI through `scion-sdk`; the required Scion SDK core
 > still carries `epistemic-graph[full]`. The `[agent-runtime]` extra additionally
 > enables model orchestration.
 
@@ -206,7 +206,7 @@ _6 action-routed tool(s) · 6 verbose 1:1 tool(s). Each is enabled unless its `<
 | `PULSETOOL` | `True` | These names match the authoritative "Toggle Env Var" column in the README MCP tools table (condensed action-routed surface). |
 | `SOURCE_CREDENTIALS` | `{"x":{"type":"cookie_session","secret":"vault://pulselink/x/session"},"reddit":{"type":"oauth2","secret":"vault://pulselink/reddit/token","token_url":"https://www.reddit.com/api/v1/access_token","client_id":"<id>","client_secret_secret":"vault://pulselink/reddit/cs"},"github":{"type":"api_key","secret":"env://GITHUB_TOKEN","prefix":"token "},"exa":{"type":"api_key","secret":"env://EXA_API_KEY","prefix":""}}` | Keyless sources (youtube, web, rss, news, hackernews, v2ex, bilibili) need NOTHING here. Auth-laddered sources light up their higher-fidelity backend when a credential is set. SOURCE_CREDENTIALS is a JSON object mapping a source -> credential descriptor; secret values are URI refs resolved via the injected secrets backend (vault://, env://). Example: |
 
-#### Inherited agent-connector-sdk variables (apply to every connector)
+#### Inherited scion-sdk variables (apply to every connector)
 
 | Variable | Example | Description |
 |----------|---------|-------------|
@@ -224,7 +224,7 @@ _6 action-routed tool(s) · 6 verbose 1:1 tool(s). Each is enabled unless its `<
 | `PYTHONUNBUFFERED` | `1` | Unbuffered stdout (recommended in containers) |
 | `MCP_URL` | `http://localhost:8000/mcp` | URL of the MCP server the agent connects to |
 
-_27 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-connector-sdk set — do not edit._
+_27 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared scion-sdk set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
 
 Every variable the server reads.
@@ -278,7 +278,7 @@ Pick the extra that matches what the operator want to run:
 
 | Extra | Installs | Use when |
 |-------|----------|----------|
-| `pulselink-mcp[mcp]` | Connector-focused MCP server (`agent-connector-sdk` — FastMCP/FastAPI + `epistemic-graph[full]`) | The operator only run the **MCP server** (smallest install / image) |
+| `pulselink-mcp[mcp]` | Connector-focused MCP server (`scion-sdk` — FastMCP/FastAPI + `epistemic-graph[full]`) | The operator only run the **MCP server** (smallest install / image) |
 | `pulselink-mcp[all]` | Everything (`mcp` + `agent` + `logfire` + the `youtube`/`feeds`/`audio` source extras) | Development / both surfaces |
 
 ```bash
@@ -311,22 +311,22 @@ agent (`immutable agent digest`) with a co-located `:mcp` sidecar.
 
 ### Knowledge-graph database (`epistemic-graph`)
 
-Agent Connector SDK core dependency (`epistemic-graph[full]`). The `[mcp]` extra keeps
+Scion SDK core dependency (`epistemic-graph[full]`). The `[mcp]` extra keeps
 deployments can use the bundled engine. For production or shared state, run
 **epistemic-graph as a dedicated database service** and configure the runtime to use it.
 Deployment recipes (single-node + Raft HA), connection configuration, and architecture
 diagrams are documented in the
 [epistemic-graph deployment guide](https://knuckles-team.github.io/epistemic-graph/deployment/).
 
-<!-- BEGIN agent-connector-sdk-deployment (generated; do not edit between markers) -->
+<!-- BEGIN scion-sdk-deployment (generated; do not edit between markers) -->
 
-## Deploy with `agent-connector-sdk-deployment`
+## Deploy with `scion-sdk-deployment`
 
-Provision this package with the consolidated **`agent-connector-sdk-deployment`**
+Provision this package with the consolidated **`scion-sdk-deployment`**
 workflow. It selects an installed-package, editable-source, or immutable-container
 path; records only runtime secret and TLS-profile references in `AgentConfig`; and
 runs doctor, registration, policy, observability, and rollback gates. Ask your agent
-to **"deploy `pulselink-mcp` with agent-connector-sdk-deployment"**.
+to **"deploy `pulselink-mcp` with scion-sdk-deployment"**.
 
 | Install mode | Command |
 |------|---------|
@@ -337,7 +337,7 @@ The repository embeds no deployment profile, credential value, certificate path,
 environment-specific endpoint. Supply those at runtime through `AgentConfig` and the
 configured secret provider.
 
-<!-- END agent-connector-sdk-deployment -->
+<!-- END scion-sdk-deployment -->
 
 <!-- GOVERNED-CAPABILITY:START -->
 ## Governed capability contract

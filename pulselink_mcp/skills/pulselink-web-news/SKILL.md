@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [pulselink, web, rss, news, github, research, mcp]
 metadata:
-  author: Genius
+  author: Knuckles-Team
   version: '0.1.0'
 ---
 # PulseLink Open-Web & News Research

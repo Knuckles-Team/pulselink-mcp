@@ -2,7 +2,7 @@ import inspect
 from unittest.mock import Mock
 
 import pytest
-from agent_connector_sdk.credentials.resolver import CredentialResolver
+from scion_sdk.credentials.resolver import CredentialResolver
 
 from pulselink_mcp.api import PulseLinkClient
 from pulselink_mcp.mcp_server import get_mcp_instance, get_runtime_mcp_instance
@@ -20,7 +20,9 @@ def test_mcp_instance_registration(monkeypatch):
 
 
 def test_runtime_constructor_annotation_is_import_safe() -> None:
-    parameter = inspect.signature(get_runtime_mcp_instance).parameters["credential_resolver"]
+    parameter = inspect.signature(get_runtime_mcp_instance).parameters[
+        "credential_resolver"
+    ]
     assert "CredentialResolver" in str(parameter.annotation)
 
 
@@ -60,7 +62,7 @@ async def test_introspection_surface_cannot_execute_or_report_ready(monkeypatch)
 
 @pytest.mark.asyncio
 async def test_runtime_and_canonical_introspection_keep_separate_clients(monkeypatch):
-    from agent_connector_sdk.connector import build_server
+    from scion_sdk.connector import build_server
 
     resolver = Mock(spec=CredentialResolver)
     captured = []

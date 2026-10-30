@@ -1,7 +1,7 @@
 from unittest.mock import Mock
 
 import pytest
-from agent_connector_sdk.credentials.resolver import CredentialResolver
+from scion_sdk.credentials.resolver import CredentialResolver
 
 from pulselink_mcp.api import PulseLinkClient
 from pulselink_mcp.auth import create_client
