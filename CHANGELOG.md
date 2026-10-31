@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Hosted X (Twitter) search/browse tools (`integrations/x_search_tool.py`), externalized from agent-utilities, exposing keyless X reach over the source ladder.
 
+## [2.3.7] - 2026-10-30
+
+### Changed
+- Require `scion-sdk>=0.6.4,<0.7.0`; `uv.lock` relocked.
+
 ## [2.3.5] - 2026-10-27
 
 ### Added
