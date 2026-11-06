@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `pulse_*` tools no longer report a bare "Operation failed" when KG ingest is unavailable: the search result is returned with an `ingest` error block, and other failures carry their `cause`.
+- `pulse_*` tools no longer report a bare "Operation failed" when KG ingest is unavailable: the search result is returned with an `ingest` error block, and other failures carry their `cause`.
+
+## [Unreleased]
+
 ### Added
 - Hosted X (Twitter) search/browse tools (`integrations/x_search_tool.py`), externalized from agent-utilities, exposing keyless X reach over the source ladder.
 
