@@ -22,18 +22,28 @@ from ..sources.base import CredentialAuthorityUnavailable
 logger = logging.getLogger("pulselink_mcp.mcp")
 
 
-async def _maybe_ingest(source: str, result: dict) -> None:
-    """Push a search/list/fetch result's documents into the authoritative KG."""
+async def _maybe_ingest(source: str, result: dict) -> dict:
+    """Push a result's documents into the KG; never lose the result to an ingest failure.
+
+    Returns ``result`` unchanged when ingest is skipped or succeeds, else ``result``
+    plus an ``ingest`` block carrying the failure cause (ingest is a side effect of a
+    search, not its success condition).
+    """
     if not isinstance(result, dict) or result.get("error"):
-        return
+        return result
     docs = result.get("documents")
     if docs is None and result.get("id"):  # a single fetched document
         docs = [result]
     if not docs:
-        return
+        return result
     from ..kg_ingest import ingest_pulse_documents
 
-    await ingest_pulse_documents(source, docs)
+    try:
+        await ingest_pulse_documents(source, docs)
+    except Exception as exc:  # noqa: BLE001 - reported to the caller below
+        logger.warning("pulse ingest failed for %s: %s", source, exc)
+        return {**result, "ingest": {"ingested": None, "error": str(exc)}}
+    return result
 
 
 def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
@@ -60,12 +70,12 @@ def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
             result = await asyncio.to_thread(
                 client.search, source, query, cursor, limit
             )
-            await _maybe_ingest(source, result)
-            return result
+            return await _maybe_ingest(source, result)
         except CredentialAuthorityUnavailable:
             raise
-        except Exception:  # noqa: BLE001 — surface as a tool error, not a crash
-            return {"error": "Operation failed", "source": source}
+        except Exception as exc:  # noqa: BLE001 — surface as a tool error, not a crash
+            logger.exception("pulse operation failed for %s", source)
+            return {"error": "Operation failed", "source": source, "cause": str(exc)}
 
     @mcp.tool(tags={"pulse"})
     async def pulse_fetch(
@@ -78,12 +88,12 @@ def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
             await ctx.info(f"pulse_fetch source={source!r} target={target!r}")
         try:
             result = await asyncio.to_thread(client.fetch, source, target)
-            await _maybe_ingest(source, result)
-            return result
+            return await _maybe_ingest(source, result)
         except CredentialAuthorityUnavailable:
             raise
-        except Exception:  # noqa: BLE001
-            return {"error": "Operation failed", "source": source}
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("pulse operation failed for %s", source)
+            return {"error": "Operation failed", "source": source, "cause": str(exc)}
 
     @mcp.tool(tags={"pulse"})
     async def pulse_list(
@@ -103,12 +113,12 @@ def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
             result = await asyncio.to_thread(
                 client.list_items, source, channel, cursor, limit
             )
-            await _maybe_ingest(source, result)
-            return result
+            return await _maybe_ingest(source, result)
         except CredentialAuthorityUnavailable:
             raise
-        except Exception:  # noqa: BLE001
-            return {"error": "Operation failed", "source": source}
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("pulse operation failed for %s", source)
+            return {"error": "Operation failed", "source": source, "cause": str(exc)}
 
     @mcp.tool(tags={"pulse"})
     async def pulse_transcribe(
@@ -126,8 +136,9 @@ def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
             return await asyncio.to_thread(client.transcribe, target, source)
         except CredentialAuthorityUnavailable:
             raise
-        except Exception:  # noqa: BLE001
-            return {"error": "Operation failed", "source": source}
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("pulse operation failed for %s", source)
+            return {"error": "Operation failed", "source": source, "cause": str(exc)}
 
     @mcp.tool(tags={"pulse"})
     async def pulse_status(ctx: Context | None = None) -> dict:
@@ -171,8 +182,9 @@ def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
                 )
         except CredentialAuthorityUnavailable:
             raise
-        except Exception:  # noqa: BLE001
-            return {"error": "Operation failed", "source": source}
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("pulse operation failed for %s", source)
+            return {"error": "Operation failed", "source": source, "cause": str(exc)}
 
         docs = result.get("documents", [])
         from ..kg_ingest import ingest_pulse_documents
