@@ -28,9 +28,8 @@ Transcription requires optional extras:
 |------------------|----------|-------|
 | `pulselink-mcp[youtube]` (`yt-dlp`) | for YouTube search/fetch/captions | Used as a library, no external binary |
 | `pulselink-mcp[audio]` (`faster-whisper`) | for Whisper fallback transcription | Only when no caption track exists |
-| `MCP_TOOL_MODE` | optional | `condensed` \| `verbose` \| `both` |
 
-## Tools & actions
+## Tools
 | Tool | What it does |
 |------|--------------|
 | `pulse_search` | Search a `source` (`youtube`, `bilibili`, `podcast`) for a `query`. |
@@ -38,6 +37,10 @@ Transcription requires optional extras:
 | `pulse_transcribe` | Transcribe a `target` URL/id to text (`source` default `youtube`). |
 | `pulse_status` | Per-source backend health (flags missing `yt-dlp`/Whisper). |
 | `pulse_ingest` | Search then push documents into the KG. |
+
+The same operations are also served as client-method tools that take the same arguments:
+`pulselink_search`, `pulselink_fetch`, `pulselink_list_items`, `pulselink_transcribe`,
+`pulselink_status` and `pulselink_sources` (the list of source names).
 
 ## Recipes
 Search YouTube:

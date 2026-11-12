@@ -30,9 +30,8 @@ when a credential is present via the shared credential provider:
 | Variable | Required | Notes |
 |----------|----------|-------|
 | `SOURCE_CREDENTIALS` / provider store | optional | Enables auth backends (reddit OAuth, X API/cookie, LinkedIn cookie); keyless works without it |
-| `MCP_TOOL_MODE` | optional | `condensed` \| `verbose` \| `both` |
 
-## Tools & actions
+## Tools
 | Tool | What it does |
 |------|--------------|
 | `pulse_search` | Search a `source` for a `query` (paginated by `cursor`, `limit`). |
@@ -40,6 +39,10 @@ when a credential is present via the shared credential provider:
 | `pulse_fetch` | Fetch one item in full by URL or source-native id. |
 | `pulse_status` | Per-source backend + credential health (the doctor). |
 | `pulse_ingest` | Search/list then push the documents into the KG as `:Document` nodes. |
+
+The same operations are also served as client-method tools that take the same arguments:
+`pulselink_search`, `pulselink_fetch`, `pulselink_list_items`, `pulselink_transcribe`,
+`pulselink_status` and `pulselink_sources` (the list of source names).
 
 Valid `source` values here: `reddit`, `hackernews`, `x`, `linkedin`, `v2ex`.
 Returned documents are flat: `id`, `title`, `url`, `text`, `author`, `created_at`,

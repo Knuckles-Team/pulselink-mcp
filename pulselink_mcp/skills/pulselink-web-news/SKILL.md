@@ -3,7 +3,7 @@ name: pulselink-web-news
 skill_type: skill
 description: >-
   Keyless open-web, RSS, and news research over the pulselink-mcp MCP server — read
-  a web page as clean text (via Jina), pull items from any RSS feed, search Google
+  a web page as clean text (via Jina reader), pull items from any RSS feed, search Google
   News, and query GitHub, with a backend ladder that needs no API keys. Use when the
   agent must fetch the readable body of a URL, monitor a feed, sweep news headlines
   on a topic, or search public GitHub. Do NOT use for social/community threads
@@ -42,18 +42,21 @@ sources here are keyless; GitHub's token backend is optional.
 | Variable | Required | Notes |
 |----------|----------|-------|
 | `SOURCE_CREDENTIALS` / provider store | optional | Promotes the GitHub token backend; keyless public GitHub works without it |
-| `MCP_TOOL_MODE` | optional | `condensed` \| `verbose` \| `both` |
 
-The `feeds` extra (`feedparser`) improves RSS parsing when installed.
+`feedparser` is a core dependency, so `rss` and `news` work on a base install.
 
-## Tools & actions
+## Tools
 | Tool | What it does |
 |------|--------------|
 | `pulse_fetch` | Fetch a URL/id in full (readable web body, feed item, repo/file). |
-| `pulse_search` | Search a `source` for a `query` (`news`, `github`, `web`). |
+| `pulse_search` | Search a `source` for a `query` (`news`, `github`, `web`). `web` search uses Jina when it answers and falls back to a keyless Bing RSS feed (the Jina search endpoint now requires an API key). |
 | `pulse_list` | List a `channel` — for `rss`, the feed URL is the channel. |
 | `pulse_status` | Per-source backend + credential health. |
 | `pulse_ingest` | Search/list then push documents into the KG. |
+
+The same operations are also served as client-method tools that take the same arguments:
+`pulselink_search`, `pulselink_fetch`, `pulselink_list_items`, `pulselink_transcribe`,
+`pulselink_status` and `pulselink_sources` (the list of source names).
 
 Valid `source` values here: `web`, `rss`, `news`, `github`. Documents are flat:
 `id`, `title`, `url`, `text`, `author`, `created_at`, plus `next_cursor`.

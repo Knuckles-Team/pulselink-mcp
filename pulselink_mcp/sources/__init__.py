@@ -31,7 +31,7 @@ from .social import (
     XApiBackend,
     XCookieBackend,
 )
-from .web import GoogleNewsBackend, JinaWebBackend, RssBackend
+from .web import BingRssWebBackend, GoogleNewsBackend, JinaWebBackend, RssBackend
 
 __all__ = [
     "SOURCE_NAMES",
@@ -75,7 +75,7 @@ def build_registry(
     ladders = [
         # --- keyless-first global sources ---
         ladder("youtube", YouTubeBackend),
-        ladder("web", JinaWebBackend),
+        ladder("web", JinaWebBackend, BingRssWebBackend),
         ladder("rss", RssBackend),
         ladder("news", GoogleNewsBackend),
         ladder("hackernews", HackerNewsBackend),
