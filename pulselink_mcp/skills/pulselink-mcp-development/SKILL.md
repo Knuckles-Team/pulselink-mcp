@@ -29,7 +29,7 @@ the connector-content specification, and the focused tests.
   `SOURCE_CREDENTIALS` descriptors without storing secret values in source.
 - `pulselink_mcp/mcp_server.py` builds `ConnectorContent`, registers the
   `pulse` tool surface behind `PULSETOOL`, and supports the legacy and canonical
-  SDK server paths. `pulselink_mcp/mcp/mcp_pulse.py` owns the action-routed
+  SDK server paths. `pulselink_mcp/mcp/mcp_pulse.py` owns the typed
   registrars.
 - `pulselink_mcp/sources/**` contains the source ladders, HTTP transport, and
   unavailable-credential boundary. `pulselink_mcp/connector_sources.py` is the

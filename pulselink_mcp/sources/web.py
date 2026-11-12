@@ -60,6 +60,38 @@ class JinaWebBackend(SourceBackend):
         return PulseResult(documents=docs)
 
 
+class BingRssWebBackend(SourceBackend):
+    """Keyless web search through Bing's RSS result feed.
+
+    The Jina search endpoint answers 401 without an API key, so the ``web`` ladder
+    falls back to this backend, which needs no credential. Search only; page fetch
+    stays with the Jina reader.
+    """
+
+    name = "bing-rss"
+
+    def search(self, query: str, cursor: str | None, limit: int) -> PulseResult:
+        import feedparser
+
+        text = self.get_text(
+            "https://www.bing.com/search",
+            params={"q": query, "format": "rss", "count": str(max(1, min(limit, 50)))},
+            timeout=30,
+        )
+        parsed = feedparser.parse(text)
+        docs = [
+            PulseDocument(
+                id=entry.get("link", ""),
+                url=entry.get("link", ""),
+                title=entry.get("title", ""),
+                text=entry.get("summary", "") or entry.get("description", ""),
+                created_at=entry.get("published", ""),
+            )
+            for entry in parsed.entries[:limit]
+        ]
+        return PulseResult(documents=docs)
+
+
 class RssBackend(SourceBackend):
     """RSS/Atom feeds via ``feedparser`` (keyless, lazy-imported)."""
 

@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pulselink-mcp"
-version = "2.3.8"
+version = "2.3.9"
 description = "PulseLink — keyless open-web & social research source (MCP Server)"
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.12, <3.15"
-dependencies = [ "scion-sdk[mcp]>=0.6.4,<0.7.0", "python-dotenv>=1.2.4", "requests>=2.34.2",]
+dependencies = [ "scion-sdk[mcp]>=0.9.1,<0.10.0", "python-dotenv>=1.2.4", "requests>=2.34.2", "feedparser>=6.0.14",]
 [[project.authors]]
 name = "Repository Maintainers"
 email = "maintainers@knuckles.team"
@@ -18,11 +18,11 @@ email = "maintainers@knuckles.team"
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "scion-sdk[mcp]>=0.6.4,<0.7.0",]
+mcp = [ "scion-sdk[mcp]>=0.9.1,<0.10.0",]
 # Heavy / fragile transport deps stay OPTIONAL + lazy-imported (keyless-first):
 # the keyless web/forum/news/dev sources need only `requests` (via scion-sdk).
 youtube = [ "yt-dlp>=2026.8.19",]
-feeds = [ "feedparser>=6.0.14",]
+feeds = [ "feedparser>=6.0.14",]  # kept for compatibility; feedparser is now a core dependency
 audio = [ "faster-whisper>=1.2.1",]
 sources = [ "pulselink-mcp[youtube,feeds]>=2.3.5",]
 all = [ "pulselink-mcp[mcp,youtube,feeds,audio]>=2.2.0",]

@@ -15,10 +15,12 @@
 # pulse_list / pulse_transcribe / pulse_status / pulse_ingest).
 
 :PulseSource a owl:Class ;
+    rdfs:subClassOf :System ;
     rdfs:label "Pulse Source" ;
     rdfs:comment "A keyless open-web / social research source served by a fallback backend ladder (e.g. youtube, reddit, x, hackernews, web, rss, news, github, v2ex, bilibili). Named by pulse_search/pulse_list 'source'." .
 
 :SourceBackend a owl:Class ;
+    rdfs:subClassOf :System ;
     rdfs:label "Source Backend" ;
     rdfs:comment "One way to reach a PulseSource's content — a rung on its fallback ladder (keyless public endpoint, cookie-authenticated path, or official paid API). Reported by pulse_status." .
 

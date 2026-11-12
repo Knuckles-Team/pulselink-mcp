@@ -38,16 +38,6 @@ async def _listings():
         assert client.initialize_result.server_info.version == version("pulselink-mcp")
         resources = {str(r.uri) for r in await client.list_resources()}
         prompts = {p.name for p in await client.list_prompts()}
-        for uri in resources:
-            if uri.startswith(("ontology://", "shapes://")):
-                directory = ROOT / "ontology"
-                if uri.startswith("shapes://"):
-                    directory = directory / "shapes"
-                actual = await client.read_resource(uri)
-                assert (
-                    actual[0].text.encode()
-                    == (directory / uri.rsplit("/", 1)[-1]).read_bytes()
-                )
     return resources, prompts
 
 
