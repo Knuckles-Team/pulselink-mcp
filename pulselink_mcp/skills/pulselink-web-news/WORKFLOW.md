@@ -63,7 +63,7 @@ Search Google News:
 ```
 Search public GitHub:
 ```json
-{"source": "github", "query": "epistemic graph rust", "limit": 15}
+{"source": "github", "query": "medulla rust", "limit": 15}
 ```
 Sweep news into the KG (via `pulse_ingest`):
 ```json

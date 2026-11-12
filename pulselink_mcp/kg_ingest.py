@@ -1,4 +1,4 @@
-"""Native epistemic-graph ingestion for PulseLink records.
+"""Native medulla ingestion for PulseLink records.
 
 Connector-specific mappers emit
 canonical node_type nodes and relationship edges through the
