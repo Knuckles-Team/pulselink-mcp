@@ -58,7 +58,7 @@ The same operations are also served as client-method tools that take the same ar
 ## Recipes
 Search YouTube:
 ```json
-{"source": "youtube", "query": "epistemic graph database talk", "limit": 10}
+{"source": "youtube", "query": "medulla database talk", "limit": 10}
 ```
 Fetch a video's metadata + captions:
 ```json

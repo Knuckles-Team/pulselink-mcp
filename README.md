@@ -32,7 +32,7 @@ This repository is actively maintained - Contributions are welcome!
 
 > **Install the connector-focused `[mcp]` extra.** Examples use `pulselink-mcp[mcp]` to add
 > FastMCP / FastAPI through `scion-sdk`; the required Scion SDK core
-> still carries `epistemic-graph[full]`. The `[agent-runtime]` extra additionally
+> still carries `medulla[full]`. The `[agent-runtime]` extra additionally
 > enables model orchestration.
 
 #### stdio Transport (local IDEs — Cursor, Claude Desktop, VS Code)
@@ -150,7 +150,7 @@ This table is auto-generated from the live server — do not edit by hand.
 | MCP Tool | Toggle Env Var | Description |
 |----------|----------------|-------------|
 | `pulse_fetch` | `PULSETOOL` | Fetch one item (full text/body/transcript). CONCEPT:PK-OS.governance.search-fetch-list-transcribe |
-| `pulse_ingest` | `PULSETOOL` | Search/list a source and natively ingest the results into epistemic-graph. |
+| `pulse_ingest` | `PULSETOOL` | Search/list a source and natively ingest the results into medulla. |
 | `pulse_list` | `PULSETOOL` | List items from a source channel/feed. CONCEPT:PK-OS.governance.search-fetch-list-transcribe |
 | `pulse_search` | `PULSETOOL` | Search a source and return normalized documents. CONCEPT:PK-OS.governance.search-fetch-list-transcribe |
 | `pulse_status` | `PULSETOOL` | Per-source backend + credential health (the doctor). CONCEPT:PK-OS.governance.search-fetch-list-transcribe |
@@ -278,7 +278,7 @@ Pick the extra that matches what the operator want to run:
 
 | Extra | Installs | Use when |
 |-------|----------|----------|
-| `pulselink-mcp[mcp]` | Connector-focused MCP server (`scion-sdk` — FastMCP/FastAPI + `epistemic-graph[full]`) | The operator only run the **MCP server** (smallest install / image) |
+| `pulselink-mcp[mcp]` | Connector-focused MCP server (`scion-sdk` — FastMCP/FastAPI + `medulla[full]`) | The operator only run the **MCP server** (smallest install / image) |
 | `pulselink-mcp[all]` | Everything (`mcp` + `agent` + `logfire` + the `youtube`/`feeds`/`audio` source extras) | Development / both surfaces |
 
 ```bash
@@ -301,7 +301,7 @@ One multi-stage `docker/Dockerfile` builds the MCP-only image (`--target mcp`):
 
 | Image tag | Build target | Contents | Entrypoint |
 |-----------|--------------|----------|------------|
-| `example/pulselink-mcp:mcp` | `--target mcp` | `pulselink-mcp[mcp]` — **connector-focused**, includes `epistemic-graph[full]`; no model-orchestration stack | `pulselink-mcp` |
+| `example/pulselink-mcp:mcp` | `--target mcp` | `pulselink-mcp[mcp]` — **connector-focused**, includes `medulla[full]`; no model-orchestration stack | `pulselink-mcp` |
 
 ```bash
 docker build --target mcp   -t example/pulselink-mcp:mcp    docker/   # connector-focused MCP server
@@ -309,14 +309,14 @@ docker build --target mcp   -t example/pulselink-mcp:mcp    docker/   # connecto
 
 agent (`immutable agent digest`) with a co-located `:mcp` sidecar.
 
-### Knowledge-graph database (`epistemic-graph`)
+### Knowledge-graph database (`medulla`)
 
-Scion SDK core dependency (`epistemic-graph[full]`). The `[mcp]` extra keeps
+Scion SDK core dependency (`medulla[full]`). The `[mcp]` extra keeps
 deployments can use the bundled engine. For production or shared state, run
-**epistemic-graph as a dedicated database service** and configure the runtime to use it.
+**medulla as a dedicated database service** and configure the runtime to use it.
 Deployment recipes (single-node + Raft HA), connection configuration, and architecture
 diagrams are documented in the
-[epistemic-graph deployment guide](https://knuckles-team.github.io/epistemic-graph/deployment/).
+[medulla deployment guide](https://knuckles-team.github.io/medulla/deployment/).
 
 <!-- BEGIN scion-sdk-deployment (generated; do not edit between markers) -->
 

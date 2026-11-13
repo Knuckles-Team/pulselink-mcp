@@ -160,7 +160,7 @@ def register_pulse_tools(mcp: FastMCP, client: PulseLinkClient) -> None:
         limit: int = Field(default=10, description="Max documents to pull + ingest."),
         ctx: Context | None = None,
     ) -> dict:
-        """Search/list a source and natively ingest the results into epistemic-graph.
+        """Search/list a source and natively ingest the results into medulla.
 
         Lists via the real PulseLink client (``pulse_list`` when ``channel`` is set,
         else ``pulse_search``) and pushes the documents as typed :Document nodes linked to

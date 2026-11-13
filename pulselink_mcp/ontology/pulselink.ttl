@@ -1,7 +1,8 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix core: <https://knuckles-team.github.io/ontology/core#> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix dc: <http://purl.org/dc/terms/> .
-@prefix : <http://knuckles.team/kg#> .
+@prefix : <https://knuckles-team.github.io/ontology/connector/pulselink#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
@@ -15,12 +16,12 @@
 # pulse_list / pulse_transcribe / pulse_status / pulse_ingest).
 
 :PulseSource a owl:Class ;
-    rdfs:subClassOf :System ;
+    rdfs:subClassOf core:System ;
     rdfs:label "Pulse Source" ;
     rdfs:comment "A keyless open-web / social research source served by a fallback backend ladder (e.g. youtube, reddit, x, hackernews, web, rss, news, github, v2ex, bilibili). Named by pulse_search/pulse_list 'source'." .
 
 :SourceBackend a owl:Class ;
-    rdfs:subClassOf :System ;
+    rdfs:subClassOf core:System ;
     rdfs:label "Source Backend" ;
     rdfs:comment "One way to reach a PulseSource's content — a rung on its fallback ladder (keyless public endpoint, cookie-authenticated path, or official paid API). Reported by pulse_status." .
 
@@ -29,7 +30,7 @@
 :fromSource a owl:ObjectProperty ;
     rdfs:label "from source" ;
     rdfs:comment "Links a retrieved :Document to the :PulseSource it was searched/listed/fetched from." ;
-    rdfs:domain :Document ;
+    rdfs:domain core:Document ;
     rdfs:range :PulseSource .
 
 :servedByBackend a owl:ObjectProperty ;
@@ -46,8 +47,8 @@
 :authoredBy a owl:ObjectProperty ;
     rdfs:label "authored by" ;
     rdfs:comment "Links a retrieved :Document to the :Person who authored the post/article/video." ;
-    rdfs:domain :Document ;
-    rdfs:range :Person .
+    rdfs:domain core:Document ;
+    rdfs:range core:Person .
 
 # --- fields (owl:DatatypeProperty) ---
 
@@ -71,7 +72,7 @@
     rdfs:comment "Source-native engagement metrics for a document (points/score/replies/comments), serialized as a compact JSON string." ;
     rdfs:range xsd:string .
 
-<http://knuckles.team/kg/pulselink> a owl:Ontology ;
+<https://knuckles-team.github.io/ontology/connector/pulselink> a owl:Ontology ;
     rdfs:label "PulseLink Open-Web & Social Research Ontology" ;
     rdfs:comment """PulseLink keyless open-web and social-research model — source ladders and their
     fallback backends across YouTube, Reddit, X, Hacker News, the web, RSS/news, GitHub, V2EX and
