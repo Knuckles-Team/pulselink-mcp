@@ -3,6 +3,7 @@
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix dc: <http://purl.org/dc/terms/> .
 @prefix : <https://knuckles-team.github.io/ontology/connector/pulselink#> .
+@prefix cat: <https://knuckles-team.github.io/ontology/catalog#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
@@ -20,29 +21,18 @@
     rdfs:label "Pulse Source" ;
     rdfs:comment "A keyless open-web / social research source served by a fallback backend ladder (e.g. youtube, reddit, x, hackernews, web, rss, news, github, v2ex, bilibili). Named by pulse_search/pulse_list 'source'." .
 
-:SourceBackend a owl:Class ;
-    rdfs:subClassOf core:System ;
-    rdfs:label "Source Backend" ;
-    rdfs:comment "One way to reach a PulseSource's content — a rung on its fallback ladder (keyless public endpoint, cookie-authenticated path, or official paid API). Reported by pulse_status." .
-
 # --- links (owl:ObjectProperty) ---
-
-:fromSource a owl:ObjectProperty ;
-    rdfs:label "from source" ;
-    rdfs:comment "Links a retrieved :Document to the :PulseSource it was searched/listed/fetched from." ;
-    rdfs:domain core:Document ;
-    rdfs:range :PulseSource .
 
 :servedByBackend a owl:ObjectProperty ;
     rdfs:label "served by backend" ;
-    rdfs:comment "Links a :PulseSource (or the :Document it produced) to the :SourceBackend rung that satisfied the request." ;
-    rdfs:range :SourceBackend .
+    rdfs:comment "Links a :PulseSource (or the :Document it produced) to the core:SourceBackend rung that satisfied the request." ;
+    rdfs:range core:SourceBackend .
 
 :hasBackend a owl:ObjectProperty ;
     rdfs:label "has backend" ;
-    rdfs:comment "Links a :PulseSource to a :SourceBackend on its fallback ladder." ;
+    rdfs:comment "Links a :PulseSource to a core:SourceBackend on its fallback ladder." ;
     rdfs:domain :PulseSource ;
-    rdfs:range :SourceBackend .
+    rdfs:range core:SourceBackend .
 
 :authoredBy a owl:ObjectProperty ;
     rdfs:label "authored by" ;

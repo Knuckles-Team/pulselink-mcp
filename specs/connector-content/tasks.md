@@ -6,3 +6,4 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. Tasks run p
 
 - [x] T001 [US1] CONN-PULSELINK-MCP-CONNECTOR-CONTENT-R001 Default content.
 - [ ] T002 [US2] CONN-PULSELINK-MCP-CONNECTOR-CONTENT-R002 Register the offline bookmark reader.
+- [x] T003 [US1] CONN-PULSELINK-MCP-CONNECTOR-CONTENT-R003 The pack extends only the core ontology.

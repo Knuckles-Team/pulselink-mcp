@@ -6,6 +6,7 @@ Governing spec: [spec.md](spec.md).
 |---|---|---|---|
 | T-001 | `CONN-PULSELINK-MCP-CONNECTOR-CONTENT-R001` | `tests/test_default_content_surfaces.py::test_default_content_surfaces` | `resources/list` includes `skill://` and `ontology://`; `prompts/list` includes each packaged prompt. |
 | T-002 | `CONN-PULSELINK-MCP-CONNECTOR-CONTENT-R002` | `tests/test_bookmark_tool_served.py::test_tool_reads_authorized_root_only` (planned) | Test: `tests/test_bookmark_tool_served.py::test_tool_reads_authorized_root_only` (L3) calls the tool for a file inside and a path outside the root. |
+| T-003 | `CONN-PULSELINK-MCP-CONNECTOR-CONTENT-R003` | `tests/test_ontology_extends_core.py::test_pack_declares_no_core_term` | The packaged Turtle redeclares no core class or property. |
 
 ## Negative and boundary cases
 
