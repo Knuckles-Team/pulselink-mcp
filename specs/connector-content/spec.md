@@ -43,6 +43,7 @@ The fleet operator and the engine rely on this behaviour of `pulselink-mcp`: Sub
 
 - **FR-001**: Default content. Rows: `CONN-PULSELINK-MCP-CONNECTOR-CONTENT-R001`.
 - **FR-002**: Register the offline bookmark reader. Rows: `CONN-PULSELINK-MCP-CONNECTOR-CONTENT-R002`.
+- **FR-003**: The packaged ontology extends only the core ontology and redeclares no core term (`CONN-PULSELINK-MCP-CONNECTOR-CONTENT-R003`).
 
 ## Success Criteria
 
@@ -60,3 +61,4 @@ The fleet operator and the engine rely on this behaviour of `pulselink-mcp`: Sub
 |---|---|---|---|---|
 | FR-001 | `CONN-PULSELINK-MCP-CONNECTOR-CONTENT-R001` | plan.md Production caller chain | T-001 | tests/test_default_content_surfaces.py::test_default_content_surfaces |
 | FR-002 | `CONN-PULSELINK-MCP-CONNECTOR-CONTENT-R002` | plan.md Production caller chain | T-002 | tests/test_bookmark_tool_served.py::test_tool_reads_authorized_root_only |
+| FR-003 | `CONN-PULSELINK-MCP-CONNECTOR-CONTENT-R003` | plan.md Production caller chain | T-003 | tests/test_ontology_extends_core.py::test_pack_declares_no_core_term |
