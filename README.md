@@ -5,13 +5,23 @@
 ![MCP Server](https://badge.mcpx.dev?type=server 'MCP Server')
 ![PyPI - Downloads](https://img.shields.io/pypi/dd/pulselink-mcp)
 ![GitHub Repo stars](https://img.shields.io/github/stars/Knuckles-Team/pulselink-mcp)
+![GitHub forks](https://img.shields.io/github/forks/Knuckles-Team/pulselink-mcp)
+![GitHub contributors](https://img.shields.io/github/contributors/Knuckles-Team/pulselink-mcp)
 ![PyPI - License](https://img.shields.io/pypi/l/pulselink-mcp)
+![GitHub](https://img.shields.io/github/license/Knuckles-Team/pulselink-mcp)
 ![GitHub last commit (by committer)](https://img.shields.io/github/last-commit/Knuckles-Team/pulselink-mcp)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/Knuckles-Team/pulselink-mcp)
+![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/Knuckles-Team/pulselink-mcp)
+![GitHub issues](https://img.shields.io/github/issues/Knuckles-Team/pulselink-mcp)
+![GitHub top language](https://img.shields.io/github/languages/top/Knuckles-Team/pulselink-mcp)
+![GitHub language count](https://img.shields.io/github/languages/count/Knuckles-Team/pulselink-mcp)
+![GitHub repo size](https://img.shields.io/github/repo-size/Knuckles-Team/pulselink-mcp)
+![GitHub repo file count (file type)](https://img.shields.io/github/directory-file-count/Knuckles-Team/pulselink-mcp)
+![PyPI - Wheel](https://img.shields.io/pypi/wheel/pulselink-mcp)
+![PyPI - Implementation](https://img.shields.io/pypi/implementation/pulselink-mcp)
 
-*Version: 2.3.5*
-
-> **Documentation** — Installation, deployment, usage across the API, CLI, and MCP
-> backing platform are maintained in the
+> **Documentation** — Installation, deployment, and usage across the API, CLI, MCP,
+> and A2A agent interfaces are maintained in the
 > [official documentation](https://knuckles-team.github.io/pulselink-mcp/).
 
 ---
@@ -23,6 +33,8 @@
 PulseLink — keyless open-web & social research source (MCP Server)
 
 This repository is actively maintained - Contributions are welcome!
+
+---
 
 ## MCP
 
@@ -139,7 +151,7 @@ the detailed transport contract.
   `MCP_ALLOWED_HOSTS` in `AgentConfig`.
 <!-- END GENERATED: additional-deployment-options -->
 
-## Available MCP Tools
+### Available MCP Tools
 
 This table is auto-generated from the live server — do not edit by hand.
 
@@ -174,6 +186,8 @@ This table is auto-generated from the live server — do not edit by hand.
 
 _6 action-routed tool(s) · 6 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (**`intent` default** — the six verb-tools, granular set loaded on demand · `condensed` action-routed · `verbose` 1:1 · `both`). Auto-generated — do not edit._
 <!-- MCP-TOOLS-TABLE:END -->
+
+---
 
 ## Environment Variables
 
@@ -272,6 +286,8 @@ The full list is in the [Available MCP Tools](#available-mcp-tools) table above.
 | `EUNOMIA_POLICY_FILE` | Embedded policy file | `mcp_policies.json` |
 | `EUNOMIA_REMOTE_URL` | Remote Eunomia server URL | — |
 
+---
+
 ## Installation
 
 Pick the extra that matches what the operator want to run:
@@ -317,6 +333,33 @@ deployments can use the bundled engine. For production or shared state, run
 Deployment recipes (single-node + Raft HA), connection configuration, and architecture
 diagrams are documented in the
 [medulla deployment guide](https://knuckles-team.github.io/medulla/deployment/).
+
+---
+
+## Documentation
+
+The complete documentation is published as the
+[official documentation site](https://knuckles-team.github.io/pulselink-mcp/) and is
+the recommended reference for installation, deployment, and day-to-day operation.
+
+---
+
+## Repository Owners
+
+<img width="100%" height="180em" src="https://github-readme-stats.vercel.app/api?username=example&show_icons=true&hide_border=true&&count_private=true&include_all_commits=true" />
+
+![GitHub followers](https://img.shields.io/github/followers/example)
+![GitHub User's stars](https://img.shields.io/github/stars/example)
+
+---
+
+## Contribute
+
+Contributions are welcome! Please ensure code quality by running local checks before submitting pull requests:
+- Format code using `ruff format .`
+- Lint code using `ruff check .`
+- Validate type-safety with `mypy .`
+- Run test suites using `pytest`
 
 <!-- BEGIN scion-sdk-deployment (generated; do not edit between markers) -->
 
