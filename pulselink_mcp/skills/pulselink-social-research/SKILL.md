@@ -2,13 +2,7 @@
 name: pulselink-social-research
 skill_type: skill
 description: >-
-  Keyless social and community research over the pulselink-mcp MCP server — search,
-  list, and fetch posts/threads/comments from Reddit, Hacker News, X, LinkedIn and
-  V2EX with a domain-typed tool that falls back across a backend ladder (keyless
-  public endpoint → cookie → official API). Use when the agent must gauge sentiment,
-  surface discussion threads, pull a subreddit/HN front page, or fetch one post in
-  full — with no API keys required. Do NOT use for open-web pages / RSS / news
-  (pulselink-web-news) or for video/audio transcripts (pulselink-media-transcripts).
+  Keyless social and community research over the pulselink-mcp MCP server: search, list and fetch posts and threads from Reddit, Hacker News, X, LinkedIn and V2EX with no API keys. Use to gauge sentiment, surface discussions or fetch one post in full. Not for web/RSS/news or video transcripts.
 license: MIT
 tags: [pulselink, social, reddit, hackernews, research, mcp]
 metadata:
@@ -16,6 +10,8 @@ metadata:
   version: '0.1.0'
 ---
 # PulseLink Social & Community Research
+
+Scope: Keyless social and community research over the pulselink-mcp MCP server — search, list, and fetch posts/threads/comments from Reddit, Hacker News, X, LinkedIn and V2EX with a domain-typed tool that falls back across a backend ladder (keyless public endpoint → cookie → official API). Use when the agent must gauge sentiment, surface discussion threads, pull a subreddit/HN front page, or fetch one post in full — with no API keys required. Do NOT use for open-web pages / RSS / news (pulselink-web-news) or for video/audio transcripts (pulselink-media-transcripts).
 
 Domain-typed, keyless reach into social and community sources — **Reddit**,
 **Hacker News**, **X**, **LinkedIn**, and **V2EX** — through the pulselink-mcp
@@ -43,6 +39,22 @@ when a credential is present via the shared credential provider:
 | Variable | Required | Notes |
 |----------|----------|-------|
 | `SOURCE_CREDENTIALS` / provider store | optional | Enables auth backends (reddit OAuth, X API/cookie, LinkedIn cookie); keyless works without it |
+
+## Steps
+
+1. Check which backends are live by calling `pulse_status`. Verify each wanted source (`reddit`, `hackernews`, `x`, `linkedin`, `v2ex`) lists a usable backend.
+2. Discover content by calling `pulse_search` with `source` and `query`, or `pulse_list` with `source` and `channel`. Verify the result has documents with `id`, `title` and `url`.
+3. Read one item in full by calling `pulse_fetch` with `source` and the `target` URL or id. Verify `text` and `metrics` are present.
+4. Page further by passing the returned `next_cursor` to the same search or list call. Verify a different first `id` comes back.
+5. Optionally persist results by calling `pulse_ingest` with `source` and `query`. Verify `ingested` reports `{nodes, edges}` rather than `null`.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Reddit call returns 403 | Keyless endpoint blocked by anti-bot limits | Add a `reddit` entry to `SOURCE_CREDENTIALS` so the OAuth backend is used, then re-check `pulse_status` |
+| `x` or `linkedin` returns nothing or errors | No cookie or API credential, so the auth backend stays dark | Supply the credential through `SOURCE_CREDENTIALS`, or switch to `reddit`/`hackernews` which work keyless |
+| Search or list call is rejected | `query` was sent to `pulse_list` or `channel` to `pulse_search` | Use `pulse_search` with `query`, or `pulse_list` with `channel` (a subreddit is a channel) |
 
 ## Tools
 | Tool | What it does |

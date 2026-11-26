@@ -2,13 +2,7 @@
 name: pulselink-web-news
 skill_type: skill
 description: >-
-  Keyless open-web, RSS, and news research over the pulselink-mcp MCP server — read
-  a web page as clean text (via Jina reader), pull items from any RSS feed, search Google
-  News, and query GitHub, with a backend ladder that needs no API keys. Use when the
-  agent must fetch the readable body of a URL, monitor a feed, sweep news headlines
-  on a topic, or search public GitHub. Do NOT use for social/community threads
-  (pulselink-social-research) or video/audio transcripts
-  (pulselink-media-transcripts).
+  Keyless open-web, RSS, and news research over the pulselink-mcp MCP server — read a web page as clean text (via Jina reader), pull items from any RSS feed, search Google News, and query GitHub, with a backend ladder that needs no API keys. Use when the agent must fetch the readable body of a URL, monitor a feed, sweep news headlines on a topic, or search public GitHub.
 license: MIT
 tags: [pulselink, web, rss, news, github, research, mcp]
 metadata:
@@ -16,6 +10,8 @@ metadata:
   version: '0.1.0'
 ---
 # PulseLink Open-Web & News Research
+
+Scope: Keyless open-web, RSS, and news research over the pulselink-mcp MCP server — read a web page as clean text (via Jina reader), pull items from any RSS feed, search Google News, and query GitHub, with a backend ladder that needs no API keys. Use when the agent must fetch the readable body of a URL, monitor a feed, sweep news headlines on a topic, or search public GitHub. Do NOT use for social/community threads (pulselink-social-research) or video/audio transcripts (pulselink-media-transcripts).
 
 Domain-typed, keyless reach into the **open web** (`web` via Jina reader), **RSS**
 feeds, **Google News**, and public **GitHub**, through the pulselink-mcp source
@@ -44,6 +40,22 @@ sources here are keyless; GitHub's token backend is optional.
 | `SOURCE_CREDENTIALS` / provider store | optional | Promotes the GitHub token backend; keyless public GitHub works without it |
 
 `feedparser` is a core dependency, so `rss` and `news` work on a base install.
+
+## Steps
+
+1. Check backend readiness by calling `pulse_status`. Verify `web`, `rss`, `news` and `github` each report a usable backend.
+2. Discover items by calling `pulse_search` with `source` (`news`, `github`, `web`) and `query`, or `pulse_list` with `source` `rss` and the feed URL as `channel`. Verify the result has documents with a `url`.
+3. Read a full page or item by calling `pulse_fetch` with `source` `web` and the item `url` as `target`. Verify the returned `text` is the readable article body.
+4. Page further by passing `next_cursor` back to the same call. Verify new `id` values appear.
+5. Optionally persist results by calling `pulse_ingest` with `source` and `query`. Verify `ingested` reports `{nodes, edges}` rather than `null`.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| RSS search returns nothing | The feed URL was sent as a `query` to `pulse_search` | Call `pulse_list` with `source` `rss` and the feed URL as `channel` |
+| GitHub search is rate limited | Keyless public endpoint ceiling | Add a `github` entry to `SOURCE_CREDENTIALS` to promote the token backend, then re-run `pulse_status` |
+| News items have only snippets | `news` returns headlines, not article bodies | Call `pulse_fetch` with `source` `web` and each item `url` as `target` |
 
 ## Tools
 | Tool | What it does |

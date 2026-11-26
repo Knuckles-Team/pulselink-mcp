@@ -19,6 +19,22 @@ Use the provider's governed MCP tools through Arbora delegation.
 5. Ingest source data only through the signed connector preset and ChangeEnvelope path.
 6. Verify the durable result and its trace/evidence before reporting completion.
 
+## Steps
+
+1. Confirm the GraphSession and tenant by calling `pulse_status` before any discovery. Verify a tenant id is present and stop if it is not.
+2. Discover the current tool surface by reading `references/catalog.md` and calling `pulse_status`. Verify every tool name you will use appears in the live list.
+3. Inspect read-only first with `pulse_search` or `pulse_fetch`. Verify the result matches the request before any change is proposed.
+4. Execute changes only after approval, as a fenced WorkItem, using `pulse_ingest` for ingestion. Verify the WorkItem id is recorded.
+5. Confirm the outcome by calling `pulse_fetch` on the ingested item and reading the WorkItem trace. Verify it shows the expected durable result before reporting completion.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Tool name or schema rejected | A stale tool name was assumed | Re-read `references/catalog.md` and the live tool list, then call the current name |
+| Session or tenant missing | GraphSession was not established | Stop, establish a verified GraphSession for the tenant, and restart from step 1 |
+| Ingest returns `ingested: null` | No engine is connected | Check `pulse_status`, restore the engine connection, and only then run `pulse_ingest` again as a new WorkItem |
+
 ## Safety contract
 
 - Never persist credentials, endpoints, raw personal identifiers, hostnames, or local paths.
