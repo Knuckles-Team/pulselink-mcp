@@ -79,6 +79,22 @@ transports, host/port configuration, and the SDK's runtime secret boundary.
    the legacy-profile container build, and a deployed image pin must not move
    until the corresponding public package has passed its exact guard.
 
+## Steps
+
+1. Read the owning spec and inspect the surface you will change, for example `grep -n "PULSETOOL" pulselink_mcp/mcp_server.py`. Verify you can name the file and function that own the behavior.
+2. Make the smallest connector-owned change, keeping tool names, source ids and TLS verification. Verify `git diff --stat` touches only the intended files.
+3. Run the bound test with `uv run --locked --extra test pytest -q tests/test_pulselink_development_skill.py`. Verify it exits with code 0.
+4. Run the repository hooks with `uvx pre-commit run --all-files`. Verify every hook reports Passed.
+5. For packaged content changes, build with `uv build` and list the archives. Verify `pulselink_mcp/skills/` files appear in the wheel and sdist.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Test cannot find the skill file | Path or heading renamed | Restore `pulselink_mcp/skills/pulselink-mcp-development/SKILL.md` and the rapid-delivery heading, then re-run the test |
+| Pre-commit hook fails | Formatting or spelling finding | Read the hook output, fix the flagged file, and re-stage it before committing |
+| Skills missing from the wheel | Package data rule not updated | Check `skills/**` in the package data of `pyproject.toml` and rebuild with `uv build` |
+
 ## Focused validation
 
 For client or source changes, run the smallest relevant test file and keep
